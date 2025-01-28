@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
+import 'register_screen.dart';
 
 void main() {
   runApp(EcoPracticesApp());
@@ -13,7 +13,7 @@ class EcoPracticesApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: LoginScreen(),
+      home: RegisterScreen(),
     );
   }
 }
