@@ -66,44 +66,49 @@ class RegisterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF6C9D7A),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Align(
-              alignment: Alignment.topLeft,
-              child: Text(
-                'Create Your Account',
-                style: const TextStyle(
-                  fontSize: 24.0,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.green,
-                ),
+      body: Stack(
+        children: [
+          Positioned(
+            top: 50, // Adjust the distance from the top
+            left: 20, // Adjust the distance from the left
+            child: Text(
+              'Create Your Account',
+              style: const TextStyle(
+                fontSize: 24.0,
+                fontWeight: FontWeight.w600,
+                color: Colors.green,
               ),
             ),
-            const SizedBox(height: 10),
-            buildTextField(nameController, 'Name'),
-            const SizedBox(height: 10),
-            buildTextField(locationController, 'Location'),
-            const SizedBox(height: 10),
-            buildTextField(emailOrPhoneController, 'Email or Phone Number',
-                keyboardType: TextInputType.emailAddress),
-            const SizedBox(height: 10),
-            buildTextField(passwordController, 'Password', obscureText: true),
-            const SizedBox(height: 20),
-            Center(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 100.0, left: 16.0, right: 16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                buildTextField(nameController, 'Name'),
+                const SizedBox(height: 10),
+                buildTextField(locationController, 'Location'),
+                const SizedBox(height: 10),
+                buildTextField(emailOrPhoneController, 'Email or Phone Number',
+                    keyboardType: TextInputType.emailAddress),
+                const SizedBox(height: 10),
+                buildTextField(passwordController, 'Password',
+                    obscureText: true),
+                const SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                    ),
+                    onPressed: () => register(context),
+                    child: const Text('Register'),
+                  ),
                 ),
-                onPressed: () => register(context),
-                child: const Text('Register'),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
