@@ -1,52 +1,73 @@
 import 'package:flutter/material.dart';
+import 'waste_management_screen.dart';
+import 'carbon_emission_screen.dart';
+import 'sustainable_transportation_screen.dart'; // Import the new screen
 
 class DashboardScreen extends StatelessWidget {
   // List of eco-friendly options
   final List<String> ecoOptions = [
     'Waste Management',
     'Carbon Emission',
-    'Energy Consumption',
-    'Sustainable Transportation', // New category added
+    'Sustainable Transportation',
   ];
+
+  DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Eco Practices Dashboard'),
-        backgroundColor: Colors.green, // Consistent color scheme
+        backgroundColor: Colors.green,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(12.0), // Padding around the list
+        padding: const EdgeInsets.all(12.0),
         child: ListView.builder(
           itemCount: ecoOptions.length,
           itemBuilder: (context, index) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0), // Space between cards
+              padding: const EdgeInsets.only(bottom: 12.0),
               child: Card(
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0), // Rounded corners
+                  borderRadius: BorderRadius.circular(12.0),
                 ),
-                elevation: 4.0, // Shadow effect for a raised look
+                elevation: 4.0,
                 child: InkWell(
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${ecoOptions[index]} selected'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
+                    if (ecoOptions[index] == 'Waste Management') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WasteManagementScreen(),
+                        ),
+                      );
+                    } else if (ecoOptions[index] == 'Carbon Emission') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CarbonEmissionScreen(),
+                        ),
+                      );
+                    } else if (ecoOptions[index] == 'Sustainable Transportation') {
+                      // Navigate to Sustainable Transportation Screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SustainableTransportationScreen(),
+                        ),
+                      );
+                    }
                   },
-                  splashColor: Colors.green.withOpacity(0.2), // Ripple effect
+                  splashColor: Colors.green.withOpacity(0.3),
                   child: Container(
-                    height: 120, // Larger height for better visuals
+                    height: 120,
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        CircleAvatar( // Icon or image
+                        CircleAvatar(
                           backgroundColor: Colors.green,
-                          child: Icon(Icons.eco, color: Colors.white),
                           radius: 30,
+                          child: Icon(Icons.directions_car, color: Colors.white),
                         ),
                         SizedBox(width: 16),
                         Expanded(
