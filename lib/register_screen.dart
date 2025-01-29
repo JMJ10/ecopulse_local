@@ -69,14 +69,14 @@ class RegisterScreen extends StatelessWidget {
       body: Stack(
         children: [
           Positioned(
-            top: 50, // Adjust the distance from the top
-            left: 20, // Adjust the distance from the left
+            top: 50,
+            left: 20,
             child: Text(
               'Create Your Account',
               style: const TextStyle(
                 fontSize: 24.0,
                 fontWeight: FontWeight.w600,
-                color: Colors.green,
+                color: Color(0xff1F3B3D),
               ),
             ),
           ),
@@ -97,13 +97,27 @@ class RegisterScreen extends StatelessWidget {
                     obscureText: true),
                 const SizedBox(height: 20),
                 Center(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
+                  child: Opacity(
+                    opacity: 0.9,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white.withOpacity(0.2),
+                      ),
+                      onPressed: () => register(context),
+                      child: const Text('Register', style: TextStyle(color: Color(0xFF1F3B3D))),
                     ),
-                    onPressed: () => register(context),
-                    child: const Text('Register'),
                   ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    socialLoginButton('assets/facebook.png'),
+                    const SizedBox(width: 10),
+                    socialLoginButton('assets/google.png'),
+                    const SizedBox(width: 10),
+                    socialLoginButton('assets/whatsapp.png'),
+                  ],
                 ),
               ],
             ),
@@ -118,7 +132,7 @@ class RegisterScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -136,6 +150,31 @@ class RegisterScreen extends StatelessWidget {
         ),
         keyboardType: keyboardType,
         obscureText: obscureText,
+      ),
+    );
+  }
+
+  Widget socialLoginButton(String assetPath) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xff6C9D7A),
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Image.asset(
+          assetPath,
+          width: 30,
+          height: 30,
+        ),
       ),
     );
   }
