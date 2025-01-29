@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'register_screen.dart';
+import 'splash_screen.dart';
 
 void main() {
   runApp(EcoPracticesApp());
 }
 
 class EcoPracticesApp extends StatelessWidget {
+  const EcoPracticesApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -13,7 +15,7 @@ class EcoPracticesApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: RegisterScreen(),
+      home: SplashScreen(),
     );
   }
 }
