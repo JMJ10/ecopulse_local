@@ -1,64 +1,62 @@
 import 'package:flutter/material.dart';
-import 'dashboard_screen.dart';
+import 'package:ecopulse_local/dashboard_screen.dart';
+import 'package:ecopulse_local/services/auth_services.dart';
+import 'package:ecopulse_local/reg_success.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
+  @override
+  _RegisterScreenState createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController nameController = TextEditingController();
   final TextEditingController locationController = TextEditingController();
   final TextEditingController emailOrPhoneController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  RegisterScreen({super.key});
+  bool isLoading = false;
+  final AuthService authService = AuthService();
 
-  void register(BuildContext context) {
+  void register(BuildContext context) async {
     String name = nameController.text.trim();
     String location = locationController.text.trim();
     String emailOrPhone = emailOrPhoneController.text.trim();
     String password = passwordController.text.trim();
 
-    if (name.isEmpty) {
+    if (name.isEmpty || location.isEmpty || emailOrPhone.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your name')),
+        const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
 
-    if (location.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your location')),
-      );
-      return;
-    }
+    setState(() {
+      isLoading = true;
+    });
 
-    if (emailOrPhone.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Please enter your email or phone number')),
+    try {
+      await authService.signUpUser(
+        context: context,
+        email: emailOrPhone,
+        password: password,
+        name: name,
+        location: location,
+        id: '',
       );
-      return;
-    }
 
-    if (emailOrPhone.contains('@')) {
-      if (password.isNotEmpty) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter your password')),
-        );
-      }
-    } else {
-      if (emailOrPhone.length >= 10) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid phone number')),
-        );
-      }
+      // Navigate to Registration Success Screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => RegistrationSuccessScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -71,9 +69,9 @@ class RegisterScreen extends StatelessWidget {
           Positioned(
             top: 50,
             left: 20,
-            child: Text(
+            child: const Text(
               'Create Your Account',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24.0,
                 fontWeight: FontWeight.w600,
                 color: Color(0xff1F3B3D),
@@ -90,11 +88,9 @@ class RegisterScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 buildTextField(locationController, 'Location'),
                 const SizedBox(height: 10),
-                buildTextField(emailOrPhoneController, 'Email or Phone Number',
-                    keyboardType: TextInputType.emailAddress),
+                buildTextField(emailOrPhoneController, 'Email or Phone Number', keyboardType: TextInputType.emailAddress),
                 const SizedBox(height: 10),
-                buildTextField(passwordController, 'Password',
-                    obscureText: true),
+                buildTextField(passwordController, 'Password', obscureText: true),
                 const SizedBox(height: 20),
                 Center(
                   child: Opacity(
@@ -104,7 +100,9 @@ class RegisterScreen extends StatelessWidget {
                         backgroundColor: Colors.white.withOpacity(0.2),
                       ),
                       onPressed: () => register(context),
-                      child: const Text('Register', style: TextStyle(color: Color(0xFF1F3B3D))),
+                      child: isLoading
+                          ? CircularProgressIndicator(color: Colors.white)
+                          : const Text('Register', style: TextStyle(color: Color(0xFF1F3B3D))),
                     ),
                   ),
                 ),
@@ -127,8 +125,7 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 
-  Widget buildTextField(TextEditingController controller, String label,
-      {TextInputType? keyboardType, bool obscureText = false}) {
+  Widget buildTextField(TextEditingController controller, String label, {TextInputType? keyboardType, bool obscureText = false}) {
     return Container(
       padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
@@ -179,3 +176,4 @@ class RegisterScreen extends StatelessWidget {
     );
   }
 }
+
