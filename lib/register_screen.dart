@@ -58,37 +58,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         isLoading = false;
       });
     }
-  
-
-
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      await authService.signUpUser(
-        context: context,
-        email: emailOrPhone,
-        password: password,
-        name: name,
-        location: location,
-        id: '',
-      );
-
-      // Navigate to Registration Success Screen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => RegistrationSuccessScreen()),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
   }
 
   @override
@@ -162,7 +131,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
-        color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -234,3 +202,4 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
+
