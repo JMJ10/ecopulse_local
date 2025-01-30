@@ -58,6 +58,37 @@ class _RegisterScreenState extends State<RegisterScreen> {
         isLoading = false;
       });
     }
+  
+
+
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      await authService.signUpUser(
+        context: context,
+        email: emailOrPhone,
+        password: password,
+        name: name,
+        location: location,
+        id: '',
+      );
+
+      // Navigate to Registration Success Screen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => RegistrationSuccessScreen()),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -74,6 +105,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               style: TextStyle(
                 fontSize: 24.0,
                 fontWeight: FontWeight.w600,
+                color: Color(0xff1F3B3D),
                 color: Color(0xff1F3B3D),
               ),
             ),
@@ -130,6 +162,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
@@ -147,6 +180,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         keyboardType: keyboardType,
         obscureText: obscureText,
+      ),
+    );
+  }
+
+  Widget socialLoginButton(String assetPath) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: const Color(0xff6C9D7A),
+        borderRadius: BorderRadius.circular(40),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.3),
+            spreadRadius: 2,
+            blurRadius: 5,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Image.asset(
+          assetPath,
+          width: 30,
+          height: 30,
+        ),
       ),
     );
   }
