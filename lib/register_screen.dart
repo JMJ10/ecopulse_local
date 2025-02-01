@@ -75,7 +75,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 fontSize: 24.0,
                 fontWeight: FontWeight.w600,
                 color: Color(0xff1F3B3D),
-                color: Color(0xff1F3B3D),
               ),
             ),
           ),
@@ -148,31 +147,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         keyboardType: keyboardType,
         obscureText: obscureText,
-      ),
-    );
-  }
-
-  Widget socialLoginButton(String assetPath) {
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: const Color(0xff6C9D7A),
-        borderRadius: BorderRadius.circular(40),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 2,
-            blurRadius: 5,
-          ),
-        ],
-      ),
-      child: Center(
-        child: Image.asset(
-          assetPath,
-          width: 30,
-          height: 30,
-        ),
       ),
     );
   }
