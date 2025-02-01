@@ -5,13 +5,16 @@ import 'package:http/http.dart' as http;
 import 'package:ecopulse_local/utils/utils.dart';
 import 'package:ecopulse_local/utils/constants.dart';
 import 'package:ecopulse_local/models/user.dart';
+import 'package:provider/provider.dart';
+import 'package:ecopulse_local/providers/user_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   // sign up user
   Future<void> signUpUser({
     required BuildContext context,
     required String id,
-     required String name,
+    required String name,
     required String email,
     required String location,
     required String password,
@@ -23,6 +26,7 @@ class AuthService {
         email: email,
         location: location,
         password: password,
+        token: '',
       );
 
       http.Response res = await http.post(
@@ -46,36 +50,71 @@ class AuthService {
   }
 
   // sign in user
-  /*Future<void> signInUser({
-    required BuildContext context,
-    required String email,
-    required String password,
-    required String name,
-    required String location,
-  }) async {
+  Future<bool> signInUser({
+  required BuildContext context,
+  required String email,
+  required String password,
+}) async {
+  try {
+    var userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    http.Response res = await http.post(
+      Uri.parse('${Constants.uri}/api/signin'),
+      body: jsonEncode({
+        'email': email,
+        'password': password,
+      }),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+
+    if (res.statusCode == 200) {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      userProvider.setUser(res.body);
+      await prefs.setString('x-auth-token', jsonDecode(res.body)['token']);
+      return true; // Return true for successful login
+    } else {
+      throw jsonDecode(res.body)['msg'] ?? 'An error occurred during sign in';
+    }
+  } catch (e) {
+    throw e.toString();
+  }
+}
+
+
+  void getUser(BuildContext context) async {
     try {
-      http.Response res = await http.post(
-        Uri.parse('${Constants.uri}/api/signin'),
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-        }),
+      var userProvider=Provider.of<UserProvider>(context,listen:false);
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
+
+      if(token==null){
+        prefs.setString('x-auth-token', '');
+      }
+
+      var tokenRes=await http.post(
+        Uri.parse('${Constants.uri}/tokenIsValid'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': token!,
         },
       );
+      
+      var response=jsonDecode(tokenRes.body);
+      if(response==true){
+        http.Response userRes = await http.get(
+          Uri.parse('${Constants.uri}/'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'x-auth-token': token,
+          },
+        );
 
-      httpErrorHandle(
-        response: res,
-        context: context,
-        onSuccess: () {
-          // Add token handling here if needed
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        },
-      );
+        userProvider.setUser(userRes.body);
+      }
     } catch (e) {
       showSnackBar(context, e.toString());
     }
   }
-  */
 }

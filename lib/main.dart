@@ -1,12 +1,44 @@
+import 'package:ecopulse_local/splash_screen.dart';
 import 'package:flutter/material.dart';
-import 'splash_screen.dart';
+import 'package:provider/provider.dart';
+
+import 'package:ecopulse_local/dashboard_screen.dart';
+import 'package:ecopulse_local/home_screen.dart';
+import 'package:ecopulse_local/models/user.dart';
+import 'package:ecopulse_local/services/auth_services.dart';
+
+import 'providers/user_provider.dart';
 
 void main() {
-  runApp(EcoPracticesApp());
+  runApp(
+    MultiProvider(
+      providers:[
+        ChangeNotifierProvider(create: (context) => UserProvider()),
+      ],
+      child:
+    EcoPracticesApp(),
+    ),
+  );
 }
 
-class EcoPracticesApp extends StatelessWidget {
-  const EcoPracticesApp({super.key});
+class EcoPracticesApp extends StatefulWidget {
+  const EcoPracticesApp({Key? key}) : super(key: key);
+  
+  @override
+  State<EcoPracticesApp> createState() =>_EcoPracticesAppState();
+}
+
+
+class _EcoPracticesAppState extends State<EcoPracticesApp> {
+
+  final AuthService authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    authService.getUser(context);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +47,9 @@ class EcoPracticesApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: SplashScreen(),
+      home: Provider.of<UserProvider>(context,listen: false).user.token.isEmpty ? SplashScreen() : DashboardScreen(),
     );
   }
+  
+
 }

@@ -41,10 +41,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         password: password,
         name: name,
         location: location,
-        id: '',
-      );
+        id: '',      );
 
-      // Navigate to Registration Success Screen
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => RegistrationSuccessScreen()),
@@ -77,7 +75,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 color: Color(0xff1F3B3D),
               ),
             ),
-          ),
+          ),Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                icon: Icon(Icons.arrow_back),
+                onPressed: () {
+                  Navigator.pop(context);
+                  },
+              ),
+            ), 
           Padding(
             padding: const EdgeInsets.only(top: 100.0, left: 16.0, right: 16.0),
             child: Column(
