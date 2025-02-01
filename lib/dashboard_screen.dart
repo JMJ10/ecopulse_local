@@ -19,6 +19,7 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Eco Practices Dashboard'),
         backgroundColor: Colors.green,
+        automaticallyImplyLeading: false,
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),

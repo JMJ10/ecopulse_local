@@ -5,6 +5,7 @@ class RegistrationSuccessScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF6C9D7A),
       appBar: AppBar(title: Text('Registration Successful')),
       body: Center(
         child: Padding(
