@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart'; // Ensure this is correctly imported
+import 'package:ecopulse_local/login_screen.dart'; // Ensure this is correctly imported
 
 class RegistrationSuccessScreen extends StatelessWidget {
   @override

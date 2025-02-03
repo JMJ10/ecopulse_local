@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:eco_pulse/services/auth_services.dart';
-import 'package:eco_pulse/reg_success.dart';
-import 'package:eco_pulse/login_screen.dart';
+import 'package:ecopulse_local/services/auth_services.dart';
+import 'package:ecopulse_local/reg_success.dart';
+import 'package:ecopulse_local/login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override

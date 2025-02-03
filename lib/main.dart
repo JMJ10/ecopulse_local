@@ -1,4 +1,4 @@
-import 'package:ecopulse_local/splash_screen.dart';
+import 'splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,7 +7,7 @@ import 'package:ecopulse_local/home_screen.dart';
 import 'package:ecopulse_local/models/user.dart';
 import 'package:ecopulse_local/services/auth_services.dart';
 
-import 'providers/user_provider.dart';
+import 'package:ecopulse_local/providers/user_provider.dart';
 
 void main() {
   runApp(
