@@ -1,3 +1,3 @@
 class Constants {
-  static String uri = 'https://ecopulse-local-backend-server.onrender.com';
+  static String uri = 'https://ecopulselocal-production.up.railway.app';
 }
