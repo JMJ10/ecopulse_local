@@ -83,7 +83,7 @@ class AuthService {
 }
 
 
-  void getUser(BuildContext context) async {
+   getUser(BuildContext context) async {
     try {
       var userProvider=Provider.of<UserProvider>(context,listen:false);
       SharedPreferences prefs = await SharedPreferences.getInstance();

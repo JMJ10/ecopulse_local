@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'waste_management_screen.dart';
 import 'carbon_emission_screen.dart';
-import 'sustainable_transportation_screen.dart'; // Import the new screen
+import 'sustainable_transportation_screen.dart';
+import 'profile_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   // List of eco-friendly options
@@ -20,6 +21,34 @@ class DashboardScreen extends StatelessWidget {
         title: Text('Eco Practices Dashboard'),
         backgroundColor: Colors.green,
         automaticallyImplyLeading: false,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'Profile') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProfileScreen(),
+                  ),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem(
+                  value: 'Profile',
+                  child: Row(
+                    children: [
+                      Icon(Icons.person, color: Colors.black),
+                      SizedBox(width: 8),
+                      Text('Profile'),
+                    ],
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),
