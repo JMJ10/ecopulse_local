@@ -1,0 +1,2 @@
+C:/Users/joelm/StudioProjects/ecopulse_local/android/app/.cxx/Debug/3nh1v541/x86_64/CMakeFiles/edit_cache.dir
+C:/Users/joelm/StudioProjects/ecopulse_local/android/app/.cxx/Debug/3nh1v541/x86_64/CMakeFiles/rebuild_cache.dir

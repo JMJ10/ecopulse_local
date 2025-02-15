@@ -3,6 +3,8 @@ const bcryptjs = require("bcryptjs");
 const User = require("../models/user");
 const authRouter = express.Router();
 const jwt = require("jsonwebtoken");
+const auth = require("../middlewares/auth");
+
 
 authRouter.post("/api/signup",async (req,res) => {
     try{
@@ -78,6 +80,22 @@ authRouter.post("/tokenIsValid", async (req,res) => {
 authRouter.get("/", auth, async (req,res) => {
     const user = await User.findById(req.user);
     res.json({...user._doc, token: req.token});
+});
+
+authRouter.get("/api/user", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ msg: "User not found" });
+    }
+    const {password, ...userData }=user._doc;
+    res.json(userData);
+    
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
 
 });

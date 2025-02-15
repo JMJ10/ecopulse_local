@@ -78,43 +78,87 @@ class AuthService {
       throw jsonDecode(res.body)['msg'] ?? 'An error occurred during sign in';
     }
   } catch (e) {
-    throw e.toString();
+    showSnackBar(context, e.toString());
+    return false; // Return false for failed login
+
   }
 }
 
 
-   getUser(BuildContext context) async {
+   Future<bool> getUser(BuildContext context) async {
+  try {
+    var userProvider = Provider.of<UserProvider>(context, listen: false);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('x-auth-token');
+
+    print("Retrieved token from SharedPreferences: $token");
+
+
+    if(token == null || token.isEmpty) {
+      print("No token found in SharedPreferences");
+      prefs.setString('x-auth-token', '');
+      return false;
+    }
+
+    var tokenRes = await http.post(
+      Uri.parse('${Constants.uri}/tokenIsValid'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'x-auth-token': token,
+      },
+    );
+
+    if(tokenRes.statusCode!=200){
+      print("Token validation failed with status code: ${tokenRes.statusCode}");
+      prefs.setString('x-auth-token', '');
+      return false;
+    }
+    
     try {
-      var userProvider=Provider.of<UserProvider>(context,listen:false);
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('x-auth-token');
-
-      if(token==null){
-        prefs.setString('x-auth-token', '');
-      }
-
-      var tokenRes=await http.post(
-        Uri.parse('${Constants.uri}/tokenIsValid'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token!,
-        },
-      );
-      
-      var response=jsonDecode(tokenRes.body);
-      if(response==true){
+      var response = jsonDecode(tokenRes.body);
+      print("Token validation response: $response");
+      if(response == true) {
         http.Response userRes = await http.get(
-          Uri.parse('${Constants.uri}/'),
+          Uri.parse('${Constants.uri}/api/user'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'x-auth-token': token,
           },
         );
+          
+        if(userRes.statusCode!=200){
+          print("Failed to get user data, status code: ${userRes.statusCode}");
+          prefs.setString('x-auth-token', '');
+          return false;
+        }
 
-        userProvider.setUser(userRes.body);
+        try {
+          userProvider.setUser(userRes.body);
+          print("Successfully retrieved and set user data");
+          return true;
+        }
+        catch (e){
+            print("Error parsing user data: ${userRes.body}");
+            print("Exception: $e");
+            prefs.setString('x-auth-token', '');
+            return false;
+        }
+      }
+      else{
+        print("Token validation returned false");
+        prefs.setString('x-auth-token', '');
+        return false;
       }
     } catch (e) {
-      showSnackBar(context, e.toString());
+      print("Error parsing token response: ${tokenRes.body}");
+      print("Exception: $e");
+      prefs.setString('x-auth-token', '');
+      return false;
     }
   }
+  catch (e) {
+    print("Error in getUser: $e");
+    return false;
+  }
+}
 }

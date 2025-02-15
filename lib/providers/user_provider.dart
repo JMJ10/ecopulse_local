@@ -12,10 +12,21 @@ class UserProvider extends ChangeNotifier{
     );
 
     User get user => _user;
-
     void setUser(String user){
-        _user = User.fromJson(user);
-        notifyListeners();
+      if (user.isEmpty){
+        _user = User(
+        id: '',
+        name: '',
+        email: '',
+        password: '',
+        location: '',
+        token: '',
+        );
+      }
+      else{
+      _user = User.fromJson(user);
+      }  
+      notifyListeners();
     }
 
     void setUserFromModel(User user){
