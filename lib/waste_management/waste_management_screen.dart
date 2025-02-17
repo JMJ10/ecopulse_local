@@ -246,7 +246,7 @@ class _WasteManagementScreenState extends State<WasteManagementScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 12),
+                    /*const SizedBox(height: 12),
                     _buildFeatureCard(
                       title: 'Collection Dates',
                       icon: Icons.calendar_today_outlined,
@@ -257,7 +257,7 @@ class _WasteManagementScreenState extends State<WasteManagementScreen> {
                           MaterialPageRoute(builder: (context) => const CollectionDatesScreen()),
                         );
                       },
-                    ),
+                    ),*/
                   ],
                 ),
               ),
