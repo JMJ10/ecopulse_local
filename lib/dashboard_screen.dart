@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:ecopulse_local/waste_management/waste_management_screen.dart';
-import 'carbon_emission_screen.dart';
+import 'chat/chat_screen.dart';
+import 'package:ecopulse_local/carbon_emission/carbon_emission_screen.dart';
 import 'sustainable_transportation_screen.dart';
 import 'profile_screen.dart';
 import 'package:ecopulse_local/services/auth_services.dart';
@@ -130,6 +131,39 @@ class DashboardScreen extends StatelessWidget {
               ),
             );
           },
+        ),
+      ),
+      floatingActionButton: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.green.shade400, Colors.green.shade700],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withOpacity(0.3),
+              spreadRadius: 1,
+              blurRadius: 8,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ChatScreen()),
+            );
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Icon(
+            Icons.chat_bubble_outline,
+            color: Colors.white,
+          ),
+          tooltip: 'Chat with EcoPulse AI',
         ),
       ),
     );
