@@ -54,62 +54,111 @@ class _WasteManagementScreenState extends State<WasteManagementScreen> {
     }
   }
 
-  Widget _buildWasteChart() {
-    if (wasteByType.isEmpty) {
-      return const Center(
-        child: Text('No waste data available yet. Start logging your waste!'),
-      );
-    }
-
-    double maxValue = wasteByType.values.isNotEmpty ? wasteByType.values.reduce((a, b) => a > b ? a : b) : 1;
-
-    return Container(
-      height: 250,
-      padding: const EdgeInsets.all(16),
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: maxValue + 5,
-          barGroups: wasteByType.entries.map((entry) {
-            return BarChartGroupData(
-              x: wasteByType.keys.toList().indexOf(entry.key),
-              barRods: [
-                BarChartRodData(
-                  toY: entry.value,
-                  color: _getColorForWasteType(entry.key),
-                  width: 20,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ],
-            );
-          }).toList(),
-          titlesData: FlTitlesData(
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                interval: maxValue / 5,
-                reservedSize: 40,
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  if (value.toInt() >= 0 && value.toInt() < wasteByType.keys.length) {
-                    return Text(wasteByType.keys.elementAt(value.toInt()), style: TextStyle(fontSize: 12));
-                  }
-                  return const Text('');
-                },
-                reservedSize: 32,
-              ),
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          gridData: FlGridData(show: true),
-        ),
-      ),
+ Widget _buildWasteChart() {
+  if (wasteByType.isEmpty) {
+    return const Center(
+      child: Text('No waste data available yet. Start logging your waste!'),
     );
   }
+
+  double maxValue = wasteByType.values.reduce((a, b) => a > b ? a : b);
+  // Round up to nearest 10 for better scaling
+  maxValue = ((maxValue + 9) ~/ 10) * 10.0;
+
+  return Container(
+    height: 350, // Increased height for better visualization
+    padding: const EdgeInsets.fromLTRB(16, 24, 24, 16), // Adjusted padding
+    child: BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxValue,
+        minY: 0,
+        barGroups: wasteByType.entries.map((entry) {
+          return BarChartGroupData(
+            x: wasteByType.keys.toList().indexOf(entry.key),
+            barRods: [
+              BarChartRodData(
+                toY: entry.value,
+                color: _getColorForWasteType(entry.key),
+                width: 25, // Slightly wider bars for better visibility
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ],
+          );
+        }).toList(),
+        titlesData: FlTitlesData(
+          show: true,
+          topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: AxisTitles(
+            axisNameWidget: const Text(
+              'Waste Generated (kg)',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 50,
+              interval: maxValue / 5,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toStringAsFixed(1),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                );
+              },
+            ),
+          ),
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (double value, TitleMeta meta) {
+                if (value.toInt() >= 0 && value.toInt() < wasteByType.keys.length) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: RotatedBox(
+                      quarterTurns: 1, // Rotate text 90 degrees for better fit
+                      child: Text(
+                        wasteByType.keys.elementAt(value.toInt()),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  );
+                }
+                return const Text('');
+              },
+            ),
+          ),
+        ),
+        borderData: FlBorderData(
+          show: true,
+          border: Border(
+            left: BorderSide(color: Colors.grey[300]!),
+            bottom: BorderSide(color: Colors.grey[300]!),
+          ),
+        ),
+        gridData: FlGridData(
+          show: true,
+          drawHorizontalLine: true,
+          horizontalInterval: maxValue / 10, // More grid lines for better readability
+          getDrawingHorizontalLine: (value) => FlLine(
+            color: Colors.grey[200]!,
+            strokeWidth: 1,
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 
   Color _getColorForWasteType(String type) {
     switch (type.toLowerCase()) {
