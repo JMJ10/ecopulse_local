@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:ui';
+import 'package:ecopulse_local/home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:ecopulse_local/utils/utils.dart';
@@ -90,16 +90,16 @@ class AuthService {
     var userProvider = Provider.of<UserProvider>(context, listen: false);
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('x-auth-token');
-
+    
     print("Retrieved token from SharedPreferences: $token");
 
-
-    if(token == null || token.isEmpty) {
+    if (token == null || token.isEmpty) {
       print("No token found in SharedPreferences");
       prefs.setString('x-auth-token', '');
       return false;
     }
 
+    // Try to validate the token
     var tokenRes = await http.post(
       Uri.parse('${Constants.uri}/tokenIsValid'),
       headers: <String, String>{
@@ -107,8 +107,8 @@ class AuthService {
         'x-auth-token': token,
       },
     );
-
-    if(tokenRes.statusCode!=200){
+    
+    if (tokenRes.statusCode != 200) {
       print("Token validation failed with status code: ${tokenRes.statusCode}");
       prefs.setString('x-auth-token', '');
       return false;
@@ -117,34 +117,41 @@ class AuthService {
     try {
       var response = jsonDecode(tokenRes.body);
       print("Token validation response: $response");
-      if(response == true) {
+      
+      if (response == true) {
+        // Token is valid, get user data
+        final userUrl = '${Constants.uri}/api/user';
+        print("Attempting to fetch user data from: $userUrl");
+        
         http.Response userRes = await http.get(
-          Uri.parse('${Constants.uri}/api/user'),
+          Uri.parse(userUrl),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'x-auth-token': token,
           },
         );
-          
-        if(userRes.statusCode!=200){
+        
+        print("User data response status: ${userRes.statusCode}");
+        print("User data response body: ${userRes.body}");
+        
+        if (userRes.statusCode != 200) {
           print("Failed to get user data, status code: ${userRes.statusCode}");
           prefs.setString('x-auth-token', '');
           return false;
         }
-
+        
         try {
+          // Set user data and return true
           userProvider.setUser(userRes.body);
           print("Successfully retrieved and set user data");
           return true;
+        } catch (e) {
+          print("Error parsing user data: ${userRes.body}");
+          print("Exception: $e");
+          prefs.setString('x-auth-token', '');
+          return false;
         }
-        catch (e){
-            print("Error parsing user data: ${userRes.body}");
-            print("Exception: $e");
-            prefs.setString('x-auth-token', '');
-            return false;
-        }
-      }
-      else{
+      } else {
         print("Token validation returned false");
         prefs.setString('x-auth-token', '');
         return false;
@@ -155,10 +162,25 @@ class AuthService {
       prefs.setString('x-auth-token', '');
       return false;
     }
-  }
-  catch (e) {
-    print("Error in getUser: $e");
+  } catch (e) {
+    print("General error in getUser: $e");
     return false;
   }
 }
+  Future<void> logout(BuildContext context) async {
+  try {
+    var userProvider = Provider.of<UserProvider>(context, listen: false);
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('x-auth-token', '');    
+    userProvider.setUser('');  
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => HomeScreen()), 
+      (route) => false, // This clears the navigation stack
+    );
+  } catch (e) {
+    showSnackBar(context, e.toString());
+  }
+  }
+
 }

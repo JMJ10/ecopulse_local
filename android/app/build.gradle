@@ -6,9 +6,9 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ecopulse_local"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    namespace  "com.example.ecopulse_local"
+    compileSdk  flutter.compileSdkVersion
+    ndkVersion  flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

@@ -1,15 +1,32 @@
 import 'package:flutter/material.dart';
-import 'waste_management_screen.dart';
+import 'package:ecopulse_local/waste_management/waste_management_screen.dart';
 import 'carbon_emission_screen.dart';
 import 'sustainable_transportation_screen.dart';
 import 'profile_screen.dart';
+import 'package:ecopulse_local/services/auth_services.dart';
 
 class DashboardScreen extends StatelessWidget {
-  // List of eco-friendly options
-  final List<String> ecoOptions = [
-    'Waste Management',
-    'Carbon Emission',
-    'Sustainable Transportation',
+  final AuthService _authService = AuthService();
+
+  final List<Map<String, dynamic>> ecoOptions = [
+    {
+      'title': 'Waste Management',
+      'icon': Icons.delete_outline,
+      'color': Colors.orange,
+      'screen': WasteManagementScreen(),
+    },
+    {
+      'title': 'Carbon Emission',
+      'icon': Icons.cloud,
+      'color': Colors.blue,
+      'screen': CarbonEmissionScreen(),
+    },
+    {
+      'title': 'Sustainable Transportation',
+      'icon': Icons.directions_bus,
+      'color': Colors.green,
+      'screen': SustainableTransportationScreen(),
+    },
   ];
 
   DashboardScreen({super.key});
@@ -18,7 +35,7 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Eco Practices Dashboard'),
+        title: Text('Eco Practices'),
         backgroundColor: Colors.green,
         automaticallyImplyLeading: false,
         actions: [
@@ -27,102 +44,87 @@ class DashboardScreen extends StatelessWidget {
               if (value == 'Profile') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
                 );
+              } else if (value == 'Logout') {
+                _authService.logout(context);
               }
             },
-            itemBuilder: (BuildContext context) {
-              return [
-                PopupMenuItem(
-                  value: 'Profile',
-                  child: Row(
-                    children: [
-                      Icon(Icons.person, color: Colors.black),
-                      SizedBox(width: 8),
-                      Text('Profile'),
-                    ],
-                  ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'Profile',
+                child: ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text('Profile'),
                 ),
-              ];
-            },
+              ),
+              PopupMenuItem(
+                value: 'Logout',
+                child: ListTile(
+                  leading: Icon(Icons.logout, color: Colors.red),
+                  title: Text('Logout', style: TextStyle(color: Colors.red)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(16.0),
         child: ListView.builder(
           itemCount: ecoOptions.length,
           itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
-                elevation: 4.0,
-                child: InkWell(
-                  onTap: () {
-                    if (ecoOptions[index] == 'Waste Management') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => WasteManagementScreen(),
-                        ),
-                      );
-                    } else if (ecoOptions[index] == 'Carbon Emission') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CarbonEmissionScreen(),
-                        ),
-                      );
-                    } else if (ecoOptions[index] == 'Sustainable Transportation') {
-                      // Navigate to Sustainable Transportation Screen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SustainableTransportationScreen(),
-                        ),
-                      );
-                    }
-                  },
-                  splashColor: Colors.green.withOpacity(0.3),
-                  child: Container(
-                    height: 120,
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          backgroundColor: Colors.green,
-                          radius: 30,
-                          child: Icon(Icons.directions_car, color: Colors.white),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                ecoOptions[index],
-                                style: TextStyle(
-                                  fontSize: 20.0,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Learn more about ${ecoOptions[index].toLowerCase()} practices.',
-                                style: TextStyle(color: Colors.grey[600]),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                      ],
+            return Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16.0),
+              ),
+              elevation: 6.0,
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ecoOptions[index]['screen'],
                     ),
+                  );
+                },
+                splashColor: ecoOptions[index]['color'].withOpacity(0.3),
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: ecoOptions[index]['color'],
+                        radius: 35,
+                        child: Icon(
+                          ecoOptions[index]['icon'],
+                          color: Colors.white,
+                          size: 30,
+                        ),
+                      ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              ecoOptions[index]['title'],
+                              style: TextStyle(
+                                fontSize: 18.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            SizedBox(height: 6),
+                            Text(
+                              'Explore ${ecoOptions[index]['title'].toLowerCase()} practices.',
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                    ],
                   ),
                 ),
               ),

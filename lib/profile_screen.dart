@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:ecopulse_local/providers/user_provider.dart';
@@ -11,45 +13,55 @@ class ProfileScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Profile'),
         backgroundColor: Colors.green,
+        
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Align(
-          alignment: Alignment.center,
-          child: Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.green,
-              child: Icon(Icons.person, size: 50, color: Colors.white),
+              radius: 60,
+              backgroundColor: Colors.green.shade700,
+              child: Icon(Icons.person, size: 60, color: Colors.white),
             ),
             SizedBox(height: 16),
-            Text(
-              user.name, // Fetching name from user provider
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ListTile(
+                leading: Icon(Icons.person, color: Colors.green),
+                title: Text(user.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              ),
             ),
             SizedBox(height: 8),
-            Text(
-              user.email,
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ListTile(
+                leading: Icon(Icons.email, color: Colors.green),
+                title: Text(user.email, style: TextStyle(fontSize: 16, color: Colors.grey[700])),
+              ),
             ),
             SizedBox(height: 8),
-            Text(
-              "Location: ${user.location}",
-              style: TextStyle(fontSize: 16),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                // Implement Logout Functionality
-              },
-              child: Text('Logout'),
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ListTile(
+                leading: Icon(Icons.location_on, color: Colors.green),
+                title: Text(user.location ?? 'unknown location', style: TextStyle(fontSize: 16)),
+              ),
             ),
           ],
         ),
-        ),
-        ),
-      );
+      ),
+    );
   }
-}
+
+}  

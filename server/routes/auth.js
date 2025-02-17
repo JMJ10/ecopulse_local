@@ -76,6 +76,7 @@ authRouter.post("/tokenIsValid", async (req,res) => {
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
+});
 
 authRouter.get("/", auth, async (req,res) => {
     const user = await User.findById(req.user);
@@ -83,20 +84,32 @@ authRouter.get("/", auth, async (req,res) => {
 });
 
 authRouter.get("/api/user", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user);
-    if (!user) {
-      return res
-        .status(404)
-        .json({ msg: "User not found" });
-    }
-    const {password, ...userData }=user._doc;
-    res.json(userData);
+    console.log("GET /api/user endpoint hit, user id:", req.user);
     
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    try {
+      // Find user by ID (from auth middleware)
+      const user = await User.findById(req.user);
+      
+      if (!user) {
+        console.log("User not found for ID:", req.user);
+        return res.status(404).json({ msg: "User not found" });
+      }
+      
+      const userResponse = {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        location: user.location,
+      };
+      
+      console.log("Returning user data for:", user.email);
+      res.json(userResponse);
+      
+    } catch (error) {
+      console.error("Error in /api/user endpoint:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
-});
+
 module.exports = authRouter;

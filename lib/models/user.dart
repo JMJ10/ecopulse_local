@@ -5,14 +5,14 @@ class User {
    final String id;
    final String name;
    final String email;
-   final String location;
+   final String? location;
    final String password;
-  final String token;
+   final String token;
    User({
     required this.id,
     required this.name,
     required this.email,
-    required this.location,
+    this.location,
     required this.password,
     required this.token,
    });
@@ -30,13 +30,14 @@ class User {
 
   factory User.fromMap(Map<String, dynamic> map) {
     return User(
-      id: map['_id'] as String,
-      name: map['name'] as String,
-      email: map['email'] as String,
-      location: map['location'] as String,
-      password: map['password'] as String,
-      token: map['token'] as String,
-    );
+      id: map['_id'] ?? "", // Provide a default value if null
+      name: map['name'] ?? "Unknown",
+      email: map['email'] ?? "",
+      location: map['location'] ?? "", // Handle null location
+      password: map['password'] ?? "", // Might not be returned from API
+      token: map['token'] ?? "", // Might not be returned from API
+  );
+
   }
 
   String toJson() => json.encode(toMap());
