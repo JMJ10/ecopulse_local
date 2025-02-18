@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:ecopulse_local/waste_management/waste_management_screen.dart';
+import 'package:eco_pulse/waste_management/waste_management_screen.dart';
 import 'chat/chat_screen.dart';
-import 'package:ecopulse_local/carbon_emission/carbon_emission_screen.dart';
+import 'package:eco_pulse/carbon_emission/carbon_emission_screen.dart';
 import 'sustainable_transportation_screen.dart';
 import 'profile_screen.dart';
-import 'package:ecopulse_local/services/auth_services.dart';
+import 'package:eco_pulse/services/auth_services.dart';
 
 class DashboardScreen extends StatelessWidget {
   final AuthService _authService = AuthService();
@@ -45,7 +45,24 @@ class DashboardScreen extends StatelessWidget {
               if (value == 'Profile') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                  PageRouteBuilder(
+                    transitionDuration: Duration(milliseconds: 600),
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        ProfileScreen(),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                      return SlideTransition(
+                        position: Tween<Offset>(
+                          begin: Offset(1, 0),
+                          end: Offset(0, 0),
+                        ).animate(CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeInOut,
+                        )),
+                        child: child,
+                      );
+                    },
+                  ),
                 );
               } else if (value == 'Logout') {
                 _authService.logout(context);
@@ -84,8 +101,23 @@ class DashboardScreen extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => ecoOptions[index]['screen'],
+                    PageRouteBuilder(
+                      transitionDuration: Duration(milliseconds: 600),
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          ecoOptions[index]['screen'],
+                      transitionsBuilder:
+                          (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: Offset(1, 0),
+                            end: Offset(0, 0),
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: Curves.easeInOut,
+                          )),
+                          child: child,
+                        );
+                      },
                     ),
                   );
                 },
@@ -133,38 +165,36 @@ class DashboardScreen extends StatelessWidget {
           },
         ),
       ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.green.shade400, Colors.green.shade700],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(30),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.green.withOpacity(0.3),
-              spreadRadius: 1,
-              blurRadius: 8,
-              offset: Offset(0, 4),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            PageRouteBuilder(
+              transitionDuration: Duration(milliseconds: 600),
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  ChatScreen(),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset(1, 0),
+                    end: Offset(0, 0),
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInOut,
+                  )),
+                  child: child,
+                );
+              },
             ),
-          ],
+          );
+        },
+        backgroundColor: Colors.green,
+        child: Icon(
+          Icons.chat_bubble_outline,
+          color: Colors.white,
         ),
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ChatScreen()),
-            );
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Icon(
-            Icons.chat_bubble_outline,
-            color: Colors.white,
-          ),
-          tooltip: 'Chat with EcoPulse AI',
-        ),
+        tooltip: 'Chat with EcoPulse AI',
       ),
     );
   }
