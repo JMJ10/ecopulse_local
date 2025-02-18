@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:ecopulse_local/services/auth_services.dart';
-import 'package:provider/provider.dart';
-import 'package:ecopulse_local/providers/user_provider.dart';
+import 'package:eco_pulse/services/auth_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ecopulse_local/dashboard_screen.dart';
+import 'package:eco_pulse/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -17,7 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController passwordController = TextEditingController();
   final AuthService authService = AuthService();
   final _formKey = GlobalKey<FormState>();
-  
+
   bool isLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
@@ -52,12 +50,12 @@ class _LoginScreenState extends State<LoginScreen> {
     if (value == null || value.isEmpty) {
       return 'Please enter your email';
     }
-    
+
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
       return 'Please enter a valid email address';
     }
-    
+
     return null;
   }
 
@@ -72,52 +70,53 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-  if (!_formKey.currentState!.validate()) {
-    return;
-  }
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
-  setState(() {
-    isLoading = true;
-  });
+    setState(() {
+      isLoading = true;
+    });
 
-  try {
-    bool success = await authService.signInUser(
-      context: context,
-      email: emailController.text.trim(),
-      password: passwordController.text.trim(),
-    );
+    try {
+      bool success = await authService.signInUser(
+        context: context,
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
 
-    if (success && mounted) {
-      if (_rememberMe) {
-        await _saveCredentials();
+      if (success && mounted) {
+        if (_rememberMe) {
+          await _saveCredentials();
+        }
+
+        // Navigate to dashboard after successful login
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => DashboardScreen()),
+        );
       }
-      
-      // Navigate to dashboard after successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => DashboardScreen()),
-      );
-    }
-  } catch (e) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.all(16),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-    }
-  } finally {
-    if (mounted) {
-      setState(() {
-        isLoading = false;
-      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
-}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,22 +130,23 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Align(
-              alignment: Alignment.topLeft,
-              child: IconButton(
-                icon: Icon(Icons.arrow_back),
-                onPressed: () {
-                  Navigator.pop(context); 
-                },
-              ),
-            ),
+                  alignment: Alignment.topLeft,
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_back),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
                 const SizedBox(height: 60),
                 // Logo or App Name
                 const Text(
-                  'ECOPULSE',
+                  'Eco Pulse',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 50,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    fontFamily: 'MonteCarlo',
+                    color: Color(0xff67460E),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -160,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
-                
+
                 // Email Field
                 TextFormField(
                   controller: emailController,
@@ -177,7 +177,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.green, width: 2),
+                      borderSide:
+                          const BorderSide(color: Colors.green, width: 2),
                     ),
                   ),
                   keyboardType: TextInputType.emailAddress,
@@ -185,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   enabled: !isLoading,
                 ),
                 const SizedBox(height: 16),
-                
+
                 // Password Field
                 TextFormField(
                   controller: passwordController,
@@ -195,9 +196,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword 
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+                        _obscurePassword
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
                       onPressed: () {
                         setState(() {
@@ -214,7 +215,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.green, width: 2),
+                      borderSide:
+                          const BorderSide(color: Colors.green, width: 2),
                     ),
                   ),
                   obscureText: _obscurePassword,
@@ -222,14 +224,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   enabled: !isLoading,
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Remember Me Checkbox
                 Row(
                   children: [
                     Checkbox(
                       value: _rememberMe,
-                      onChanged: isLoading 
-                          ? null 
+                      onChanged: isLoading
+                          ? null
                           : (value) {
                               setState(() {
                                 _rememberMe = value ?? false;
@@ -240,8 +242,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Text('Remember me'),
                     const Spacer(),
                     TextButton(
-                      onPressed: isLoading 
-                          ? null 
+                      onPressed: isLoading
+                          ? null
                           : () {
                               // TODO: Implement forgot password
                             },
@@ -253,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Login Button
                 ElevatedButton(
                   onPressed: isLoading ? null : _handleLogin,
@@ -283,7 +285,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Sign Up Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
