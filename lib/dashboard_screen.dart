@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:eco_pulse/waste_management/waste_management_screen.dart';
+import 'package:ecopulse_local/waste_management/waste_management_screen.dart';
 import 'chat/chat_screen.dart';
-import 'package:eco_pulse/carbon_emission/carbon_emission_screen.dart';
+import 'package:ecopulse_local/carbon_emission/carbon_emission_screen.dart';
 import 'sustainable_transportation_screen.dart';
 import 'profile_screen.dart';
-import 'package:eco_pulse/services/auth_services.dart';
+import 'package:ecopulse_local/services/auth_services.dart';
 
 class DashboardScreen extends StatelessWidget {
   final AuthService _authService = AuthService();

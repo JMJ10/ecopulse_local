@@ -1,3 +1,5 @@
+
+// recyclingcenter.js
 const mongoose = require("mongoose");
 
 const recyclingCenterSchema = mongoose.Schema({
@@ -16,13 +18,42 @@ const recyclingCenterSchema = mongoose.Schema({
     type: [String],
     default: [],
   },
-  latitude: {
-    type: Number,
+  location: {
+    type: {
+      type: String,
+      enum: ['Point'],
+      required: true
+    },
+    coordinates: {
+      type: [Number],  // [longitude, latitude]
+      required: true
+    }
   },
-  longitude: {
-    type: Number,
+  operatingHours: {
+    type: String,
   },
+  website: {
+    type: String,
+  }
 });
+
+// Create a 2dsphere index for geospatial queries
+recyclingCenterSchema.index({ location: '2dsphere' });
+
+// Add a method to get centers within a radius
+recyclingCenterSchema.statics.findNearby = function(coordinates, maxDistance = 10000) {
+  return this.find({
+    location: {
+      $near: {
+        $geometry: {
+          type: 'Point',
+          coordinates: coordinates // [longitude, latitude]
+        },
+        $maxDistance: maxDistance // Distance in meters
+      }
+    }
+  });
+};
 
 const RecyclingCenter = mongoose.model("RecyclingCenter", recyclingCenterSchema);
 module.exports = RecyclingCenter;

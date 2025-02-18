@@ -28,6 +28,11 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to location to find nearby recycling centers.</string>
+	<key>GMSApiKey</key>
+	<string>AIzaSyDNyYjWspEV-5mP_viZnQ9qBh9kfp4Ph2I</string>
+
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

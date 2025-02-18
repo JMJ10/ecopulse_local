@@ -39,14 +39,20 @@ router.get("/api/waste/logs", auth, async (req, res) => {
 // Get recycling centers (optionally filtered by location)
 router.get("/api/waste/recycling-centers", auth, async (req, res) => {
   try {
-    let query = {};
-    if (req.query.location) {
-      // Simple location filtering - in production you might want 
-      // to use geospatial queries for more accurate results
-      query = { address: { $regex: req.query.location, $options: 'i' } };
+    const { latitude, longitude, radius } = req.query;
+    
+    let centers;
+    if (latitude && longitude) {
+      // Convert radius from km to meters
+      const radiusInMeters = (parseFloat(radius) || 10) * 1000;
+      centers = await RecyclingCenter.findNearby(
+        [parseFloat(longitude), parseFloat(latitude)],
+        radiusInMeters
+      );
+    } else {
+      centers = await RecyclingCenter.find({});
     }
     
-    const centers = await RecyclingCenter.find(query);
     res.json(centers);
   } catch (e) {
     res.status(500).json({ error: e.message });

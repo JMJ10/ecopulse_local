@@ -70,40 +70,49 @@ class WasteService {
   }
   
   // Get recycling centers
-  Future<List<RecyclingCenter>> getRecyclingCenters(BuildContext context) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('x-auth-token');
-      String? userLocation = Provider.of<UserProvider>(context, listen: false).user.location;
-      
-      if (token == null || token.isEmpty) {
-        throw 'Not authenticated. Please login again.';
-      }
-      
-      Uri uri = Uri.parse('${Constants.uri}/api/waste/recycling-centers');
-      if (userLocation != null && userLocation.isNotEmpty) {
-        uri = uri.replace(queryParameters: {'location': userLocation});
-      }
-      
-      http.Response res = await http.get(
-        uri,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token,
-        },
-      );
-      
-      if (res.statusCode != 200) {
-        throw jsonDecode(res.body)['msg'] ?? 'Failed to retrieve recycling centers';
-      }
-      
-      List<dynamic> centersJson = jsonDecode(res.body);
-      return centersJson.map((center) => RecyclingCenter.fromMap(center)).toList();
-    } catch (e) {
-      showSnackBar(context, e.toString());
-      rethrow;
+  Future<List<RecyclingCenter>> getRecyclingCenters(
+  BuildContext context, {
+  double? latitude,
+  double? longitude,
+}) async {
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('x-auth-token');
+    
+    if (token == null || token.isEmpty) {
+      throw 'Not authenticated. Please login again.';
     }
+    
+    Uri uri = Uri.parse('${Constants.uri}/api/waste/recycling-centers');
+    
+    // Add location parameters if available
+    if (latitude != null && longitude != null) {
+      uri = uri.replace(queryParameters: {
+        'latitude': latitude.toString(),
+        'longitude': longitude.toString(),
+        'radius': '10', // Default radius in km
+      });
+    }
+    
+    http.Response res = await http.get(
+      uri,
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'x-auth-token': token,
+      },
+    );
+    
+    if (res.statusCode != 200) {
+      throw jsonDecode(res.body)['msg'] ?? 'Failed to retrieve recycling centers';
+    }
+    
+    List<dynamic> centersJson = jsonDecode(res.body);
+    return centersJson.map((center) => RecyclingCenter.fromMap(center)).toList();
+  } catch (e) {
+    showSnackBar(context, e.toString());
+    rethrow;
   }
+}
   
   // Get collection schedules
   Future<List<CollectionSchedule>> getCollectionSchedules(BuildContext context) async {

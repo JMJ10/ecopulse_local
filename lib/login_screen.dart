@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:eco_pulse/services/auth_services.dart';
+import 'package:ecopulse_local/services/auth_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:eco_pulse/dashboard_screen.dart';
+import 'package:ecopulse_local/dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
