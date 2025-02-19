@@ -149,4 +149,32 @@ class WasteService {
       rethrow;
     }
   }
+
+  
+Future<void> addRecyclingCenter(BuildContext context, RecyclingCenter center) async {
+  try {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('x-auth-token');
+    
+    if (token == null || token.isEmpty) {
+      throw 'Not authenticated. Please login again.';
+    }
+    
+    http.Response res = await http.post(
+      Uri.parse('${Constants.uri}/api/waste/recycling-centers'),
+      body: center.toJson(),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'x-auth-token': token,
+      },
+    );
+    
+    if (res.statusCode != 200 && res.statusCode != 201) {
+      throw jsonDecode(res.body)['msg'] ?? 'Failed to add recycling center';
+    }
+  } catch (e) {
+    showSnackBar(context, e.toString());
+    rethrow;
+  }
+}
 }

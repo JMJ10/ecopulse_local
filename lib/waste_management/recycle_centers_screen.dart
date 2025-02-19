@@ -337,48 +337,74 @@ for (var center in _centers) {
 }
 
 
-  Widget _buildListView() {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+  // Replace the _buildListView() method in the RecyclingCentersScreen with this updated version:
 
-    if (_errorMessage != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              _errorMessage!,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _getCurrentLocation,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
-      );
-    }
+Widget _buildListView() {
+  if (_isLoading) {
+    return const Center(child: CircularProgressIndicator());
+  }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: _centers.length,
-      itemBuilder: (context, index) {
-        final center = _centers[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: ListTile(
-            title: Text(center.name),
-            subtitle: Text(center.address),
-            trailing: IconButton(
-              icon: const Icon(Icons.info_outline),
-              onPressed: () => _showCenterDetails(center),
-            ),
+  if (_errorMessage != null) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            _errorMessage!,
+            style: const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _getCurrentLocation,
+            child: const Text('Retry'),
+          ),
+        ],
+      ),
     );
   }
+
+  return Stack(
+    children: [
+      ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _centers.length,
+        itemBuilder: (context, index) {
+          final center = _centers[index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 16),
+            child: ListTile(
+              title: Text(center.name),
+              subtitle: Text(center.address),
+              trailing: IconButton(
+                icon: const Icon(Icons.info_outline),
+                onPressed: () => _showCenterDetails(center),
+              ),
+            ),
+          );
+        },
+      ),
+      Positioned(
+        bottom: 16,
+        right: 16,
+        child: FloatingActionButton(
+          onPressed: () async {
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AddRecyclingCenterScreen(),
+              ),
+            );
+            
+            // Refresh the list if a new center was added
+            if (result == true) {
+              _loadRecyclingCenters();
+            }
+          },
+          backgroundColor: Colors.green,
+          child: const Icon(Icons.add),
+        ),
+      ),
+    ],
+  );
 }
