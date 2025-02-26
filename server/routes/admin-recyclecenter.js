@@ -31,10 +31,9 @@ router.post('/api/admin/signin', async (req, res) => {
     // Generate token
     const token = jwt.sign(
       { id: admin._id, role: admin.role },
-      process.env.JWT_SECRET,
+      "adminSecretKey", // Use a hardcoded secret like user auth
       { expiresIn: '24h' }
     );
-
     res.json({
       token,
       admin: {

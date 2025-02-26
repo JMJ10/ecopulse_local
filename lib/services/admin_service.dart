@@ -2,10 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import '../models/recyclingcenter.dart';
 import '../models/admin.dart';
 import '../utils/constants.dart';
 import '../utils/utils.dart';
+import '../providers/admin_provider.dart';
 
 class AdminService {
   // Admin Authentication
@@ -16,6 +18,8 @@ class AdminService {
   }) async {
     try {
       print('Attempting login with email: $email');
+      var adminProvider = Provider.of<AdminProvider>(context, listen: false);
+      
       http.Response res = await http.post(
         Uri.parse('${Constants.uri}/api/admin/signin'),
         body: jsonEncode({
@@ -26,25 +30,46 @@ class AdminService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
+      
       print('Response status: ${res.statusCode}');
       print('Response body: ${res.body}');
+      
       if (res.statusCode == 200) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        String token = jsonDecode(res.body)['token'];
+        
+        // Parse the response and extract token and admin data
+        var responseData = jsonDecode(res.body);
+        String token = responseData['token'];
+        
+        // Create admin object with token
+        Admin admin = Admin(
+          id: responseData['admin']['id'],
+          name: responseData['admin']['name'],
+          email: responseData['admin']['email'],
+          role: responseData['admin']['role'],
+          permissions: Map<String, bool>.from(responseData['admin']['permissions']),
+          token: token,
+        );
+        
+        // Save admin info to provider
+        adminProvider.setAdmin(jsonEncode(admin.toMap()));
+        
+        // Save token to shared preferences
         await prefs.setString('admin-token', token);
-        return true; // Return true for successful login
+        return true;
       } else {
         throw jsonDecode(res.body)['msg'] ?? 'An error occurred during admin sign in';
       }
     } catch (e) {
       print('Error details: $e');
       showSnackBar(context, e.toString());
-      return false; // Return false for failed login
+      return false;
     }
   }
 
   Future<bool> getAdminStatus(BuildContext context) async {
     try {
+      var adminProvider = Provider.of<AdminProvider>(context, listen: false);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('admin-token');
       
@@ -67,16 +92,46 @@ class AdminService {
       }
       
       var response = jsonDecode(tokenRes.body);
-      return response == true;
+      if (response == true) {
+        // If token is valid, get admin data
+        http.Response adminRes = await http.get(
+          Uri.parse('${Constants.uri}/admin'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+            'x-auth-token': token,
+          },
+        );
+        
+        if (adminRes.statusCode == 200) {
+          // Create admin object with fetched data
+          var adminData = jsonDecode(adminRes.body);
+          Admin admin = Admin(
+            id: adminData['id'],
+            name: adminData['name'],
+            email: adminData['email'],
+            role: adminData['role'],
+            permissions: Map<String, bool>.from(adminData['permissions']),
+            token: token,
+          );
+          
+          // Update admin provider
+          adminProvider.setAdmin(jsonEncode(admin.toMap()));
+          return true;
+        }
+      }
+      return false;
     } catch (e) {
+      print('Error in getAdminStatus: $e');
       return false;
     }
   }
 
   Future<void> adminLogout(BuildContext context) async {
     try {
+      var adminProvider = Provider.of<AdminProvider>(context, listen: false);
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.setString('admin-token', '');
+      adminProvider.clearAdmin();
       
       Navigator.pushNamedAndRemoveUntil(
         context, 
