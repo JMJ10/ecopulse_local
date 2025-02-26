@@ -15,6 +15,7 @@ class AdminService {
     required String password,
   }) async {
     try {
+      print('Attempting login with email: $email');
       http.Response res = await http.post(
         Uri.parse('${Constants.uri}/api/admin/signin'),
         body: jsonEncode({
@@ -25,7 +26,8 @@ class AdminService {
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
-
+      print('Response status: ${res.statusCode}');
+      print('Response body: ${res.body}');
       if (res.statusCode == 200) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         String token = jsonDecode(res.body)['token'];
@@ -35,6 +37,7 @@ class AdminService {
         throw jsonDecode(res.body)['msg'] ?? 'An error occurred during admin sign in';
       }
     } catch (e) {
+      print('Error details: $e');
       showSnackBar(context, e.toString());
       return false; // Return false for failed login
     }

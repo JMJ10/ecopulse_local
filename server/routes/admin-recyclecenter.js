@@ -4,7 +4,7 @@ const Admin = require('../models/admin');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const RecyclingCenter = require('../models/recyclingcenter');
-const adminAuth = require('../middleware/admin-auth');
+const adminAuth = require('../middleware/adminauth');
 
 // Admin Sign In
 router.post('/api/admin/signin', async (req, res) => {
