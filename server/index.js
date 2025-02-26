@@ -2,6 +2,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const authRouter = require("./routes/auth");
 const wasteRouter = require("./routes/waste");
+const adminRouter = require("./routes/admin-recyclecenter");
+const userRouter = require("./routes/user");
+const carbonRouter = require("./routes/carbon");
 
 const PORT = process.env.PORT || 3000;
 const app = express();
