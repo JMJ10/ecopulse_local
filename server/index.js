@@ -12,6 +12,9 @@ const app = express();
 app.use(express.json());
 app.use(authRouter);  
 app.use(wasteRouter);
+app.use(adminRouter);
+app.use(userRouter);
+app.use(carbonRouter);
 
 const DB = "mongodb+srv://JoelJMJ:Joel2004@ecopulse.9sho1.mongodb.net/?retryWrites=true&w=majority&appName=EcoPulse"
 
