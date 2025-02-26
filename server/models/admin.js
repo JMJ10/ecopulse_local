@@ -20,6 +20,16 @@ const adminSchema = mongoose.Schema({
     enum: ['admin', 'super_admin'],
     default: 'admin'
   },
+  permissions: {
+    manageCenters: {
+      type: Boolean,
+      default: true
+    },
+    approveReports: {
+      type: Boolean,
+      default: true
+    }
+  },
   createdAt: {
     type: Date,
     default: Date.now,

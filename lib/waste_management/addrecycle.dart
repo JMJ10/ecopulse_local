@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart'; // Add this line
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ecopulse_local/models/recyclingcenter.dart';
 import 'package:ecopulse_local/waste_management/waste_service.dart';
 
 class AddRecyclingCenterScreen extends StatefulWidget {
-  const AddRecyclingCenterScreen({Key? key}) : super(key: key);
+  const AddRecyclingCenterScreen({Key? key, RecyclingCenter? center}) : super(key: key);
 
   @override
   _AddRecyclingCenterScreenState createState() => _AddRecyclingCenterScreenState();

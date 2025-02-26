@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart'; // Import LoginScreen
-import 'register_screen.dart'; // Import RegisterScreen
+import 'package:ecopulse_local/login_screen.dart';
+import 'package:ecopulse_local/register_screen.dart';
+import 'package:ecopulse_local/admin_loginscreen.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -12,6 +15,10 @@ class _HomeScreenState extends State<HomeScreen>
   double _opacity = 0.0;
   double _scale = 0.9;
   double _offsetY = 30.0; // Start slightly below for smooth entrance
+  
+  // Special animation values for admin button
+  double _adminOpacity = 0.0;
+  double _adminScale = 0.8;
 
   @override
   void initState() {
@@ -27,21 +34,22 @@ class _HomeScreenState extends State<HomeScreen>
         });
       }
     });
+    
+    // Even more delayed animation for admin button to make it pop
+    Future.delayed(Duration(milliseconds: 1000), () {
+      if (mounted) {
+        setState(() {
+          _adminOpacity = 1.0;
+          _adminScale = 1.0;
+        });
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(kToolbarHeight),
-        child: SafeArea(
-          child: AppBar(
-            backgroundColor: Color(0xFF6C9D7A),
-            elevation: 0,
-          ),
-        ),
-      ),
-      backgroundColor: Color(0xFF6C9D7A),
+      backgroundColor: const Color(0xFF6C9D7A), // Exact match with splash screen
       body: Center(
         child: AnimatedOpacity(
           duration: Duration(seconds: 1),
@@ -61,9 +69,7 @@ class _HomeScreenState extends State<HomeScreen>
               curve: Curves.easeInOut,
               transform: Matrix4.translationValues(0, _offsetY, 0),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Text(
                     'Welcome to',
@@ -74,63 +80,129 @@ class _HomeScreenState extends State<HomeScreen>
                       color: Color(0xff67460E),
                     ),
                   ),
+                  // Logo or app name with exact matching color from splash screen
                   const Text(
                     'Eco Pulse',
                     style: TextStyle(
-                      fontSize: 80,
+                      fontSize: 70,
                       fontWeight: FontWeight.bold,
                       fontFamily: 'MonteCarlo',
                       color: Color(0xff67460E),
+                      letterSpacing: 2.0,
                     ),
                   ),
-                  const SizedBox(height: 110),
+                  const SizedBox(height: 16),
                   const Text(
                     'Empowering You to Live Green, One Step at a Time.',
                     style: TextStyle(
-                        fontSize: 18,
-                        color: Color.fromARGB(255, 255, 255, 255)),
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 80),
+                  
+                  // Login button
                   SizedBox(
-                    width: 200,
+                    width: 250,
                     child: ElevatedButton(
                       onPressed: () {
-                        _navigateWithAnimation(context, LoginScreen());
+                        _navigateWithAnimation(context, const LoginScreen());
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Color(0xFF2D5C5A),
                         foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          side: BorderSide(
-                            color: Color(0xFF2D5C5A),
-                            width: 2,
-                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        elevation: 4,
+                      ),
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      child: const Text('Login'),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
+                  
+                  // Sign up button
                   SizedBox(
-                    width: 200,
+                    width: 250,
                     child: ElevatedButton(
                       onPressed: () {
                         _navigateWithAnimation(context, RegisterScreen());
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF6C9D7A),
-                        foregroundColor: Color(0xFF1F3B3D),
+                        backgroundColor: Colors.white,
+                        foregroundColor: Color(0xFF2D5C5A),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(20),
                           side: BorderSide(
-                            color: Color(0xFF1F3B3D),
+                            color: Color(0xFF2D5C5A),
                             width: 1,
                           ),
                         ),
+                        elevation: 2,
                       ),
-                      child: const Text('Sign Up'),
+                      child: const Text(
+                        'Sign Up',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 40),
+                  
+                  // Admin Login with special animation
+                  AnimatedOpacity(
+                    opacity: _adminOpacity,
+                    duration: Duration(milliseconds: 800),
+                    child: TweenAnimationBuilder(
+                      duration: Duration(milliseconds: 800),
+                      curve: Curves.elasticOut,
+                      tween: Tween<double>(begin: _adminScale, end: 1.0),
+                      builder: (context, double scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: child,
+                        );
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black38,
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            )
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          icon: Icon(Icons.admin_panel_settings, size: 20),
+                          label: Text('Admin Login'),
+                          onPressed: () {
+                            _navigateWithAnimation(context, const AdminLoginScreen());
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Color(0xFF1F3B3D),
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            elevation: 6,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -142,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  // 🔥 Custom Transition Function
+  // Custom Transition Function
   void _navigateWithAnimation(BuildContext context, Widget screen) {
     Navigator.push(
       context,

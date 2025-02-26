@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'package:ecopulse_local/waste_management/waste_service.dart';
 import 'package:ecopulse_local/models/recyclingcenter.dart';
+import 'addrecylce.dart';
 
 class RecyclingCentersScreen extends StatefulWidget {
   const RecyclingCentersScreen({Key? key}) : super(key: key);
@@ -407,4 +408,5 @@ Widget _buildListView() {
       ),
     ],
   );
+}
 }

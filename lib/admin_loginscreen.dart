@@ -1,20 +1,19 @@
-import 'package:ecopulse_local/register_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:ecopulse_local/services/auth_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ecopulse_local/dashboard_screen.dart';
+import 'admin_dashboard.dart';
+import 'services/admin_service.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+class AdminLoginScreen extends StatefulWidget {
+  const AdminLoginScreen({Key? key}) : super(key: key);
 
   @override
-  _LoginScreenState createState() => _LoginScreenState();
+  _AdminLoginScreenState createState() => _AdminLoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _AdminLoginScreenState extends State<AdminLoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final AuthService authService = AuthService();
+  final AdminService adminService = AdminService();
   final _formKey = GlobalKey<FormState>();
 
   bool isLoading = false;
@@ -29,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedEmail = prefs.getString('saved_email');
+    final savedEmail = prefs.getString('saved_admin_email');
     if (savedEmail != null) {
       setState(() {
         emailController.text = savedEmail;
@@ -41,9 +40,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _saveCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     if (_rememberMe) {
-      await prefs.setString('saved_email', emailController.text);
+      await prefs.setString('saved_admin_email', emailController.text);
     } else {
-      await prefs.remove('saved_email');
+      await prefs.remove('saved_admin_email');
     }
   }
 
@@ -70,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
-  Future<void> _handleLogin() async {
+  Future<void> _handleAdminLogin() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -80,7 +79,7 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      bool success = await authService.signInUser(
+      bool success = await adminService.signInAdmin(
         context: context,
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
@@ -91,10 +90,10 @@ class _LoginScreenState extends State<LoginScreen> {
           await _saveCredentials();
         }
 
-        // Navigate to dashboard after successful login
+        // Navigate to admin dashboard after successful login
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
+          MaterialPageRoute(builder: (context) => const AdminDashboard()),
         );
       }
     } catch (e) {
@@ -133,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Align(
                   alignment: Alignment.topLeft,
                   child: IconButton(
-                    icon: Icon(Icons.arrow_back),
+                    icon: const Icon(Icons.arrow_back),
                     onPressed: () {
                       Navigator.pop(context);
                     },
@@ -153,10 +152,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Welcome back!',
+                  'Admin Portal',
                   style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -166,8 +166,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextFormField(
                   controller: emailController,
                   decoration: InputDecoration(
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
+                    labelText: 'Admin Email',
+                    hintText: 'Enter your admin email',
                     prefixIcon: const Icon(Icons.email_outlined),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -193,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: passwordController,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    hintText: 'Enter your password',
+                    hintText: 'Enter your admin password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -246,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: isLoading
                           ? null
                           : () {
-                              // TODO: Implement forgot password
+                              // TODO: Implement forgot password for admin
                             },
                       child: const Text(
                         'Forgot Password?',
@@ -259,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 // Login Button
                 ElevatedButton(
-                  onPressed: isLoading ? null : _handleLogin,
+                  onPressed: isLoading ? null : _handleAdminLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -278,7 +278,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         )
                       : const Text(
-                          'Login',
+                          'Admin Login',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -286,31 +286,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                 ),
                 const SizedBox(height: 24),
-
-                // Sign Up Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Don't have an account? ",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    TextButton(
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => RegisterScreen()));
-                            },
-                      child: const Text(
-                        'Sign Up',
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),

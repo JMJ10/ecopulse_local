@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:latlong2/latlong.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class RecyclingCenter {
   final String id;
@@ -7,7 +7,7 @@ class RecyclingCenter {
   final String address;
   final String? phone;
   final List<String> acceptedMaterials;
-  final LatLng? location;
+  final LatLng location;
   final String? operatingHours;
   final String? website;
 
@@ -17,7 +17,7 @@ class RecyclingCenter {
     required this.address,
     this.phone,
     required this.acceptedMaterials,
-    this.location,
+    required this.location,
     this.operatingHours,
     this.website,
   });
@@ -58,7 +58,7 @@ class RecyclingCenter {
       address: map['address'] ?? '',
       phone: map['phone'],
       acceptedMaterials: List<String>.from(map['acceptedMaterials'] ?? []),
-      location: location,
+      location: location ?? LatLng(0, 0),
       operatingHours: map['operatingHours'],
       website: map['website'],
     );
