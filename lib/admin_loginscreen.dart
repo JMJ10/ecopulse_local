@@ -19,16 +19,31 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   bool isLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = false;
+  
+  // Use consistent key names for saved credentials
+  static const String _savedEmailKey = 'saved_admin_email';
 
   @override
   void initState() {
     super.initState();
     _loadSavedCredentials();
+    _checkExistingLogin();
+  }
+  
+  // Check if user is already logged in
+  Future<void> _checkExistingLogin() async {
+    final isLoggedIn = await adminService.getAdminStatus(context);
+    if (isLoggedIn && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AdminDashboard()),
+      );
+    }
   }
 
   Future<void> _loadSavedCredentials() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedEmail = prefs.getString('saved_admin_email');
+    final savedEmail = prefs.getString(_savedEmailKey);
     if (savedEmail != null) {
       setState(() {
         emailController.text = savedEmail;
@@ -40,9 +55,9 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
   Future<void> _saveCredentials() async {
     final prefs = await SharedPreferences.getInstance();
     if (_rememberMe) {
-      await prefs.setString('saved_admin_email', emailController.text);
+      await prefs.setString(_savedEmailKey, emailController.text);
     } else {
-      await prefs.remove('saved_admin_email');
+      await prefs.remove(_savedEmailKey);
     }
   }
 
@@ -94,6 +109,17 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const AdminDashboard()),
+        );
+      } else if (mounted) {
+        // Show login failed message if success is false but no exception was thrown
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login failed. Please check your credentials.'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            margin: EdgeInsets.all(16),
+            duration: Duration(seconds: 4),
+          ),
         );
       }
     } catch (e) {

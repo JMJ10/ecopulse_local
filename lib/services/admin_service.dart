@@ -10,6 +10,10 @@ import '../utils/utils.dart';
 import '../providers/admin_provider.dart';
 
 class AdminService {
+  // Use a consistent token key name throughout the app
+  static const String _adminTokenKey = 'admin_token';
+  static const String _adminNameKey = 'admin_name';
+
   // Admin Authentication
   Future<bool> signInAdmin({
     required BuildContext context,
@@ -32,7 +36,6 @@ class AdminService {
       );
       
       print('Response status: ${res.statusCode}');
-      print('Response body: ${res.body}');
       
       if (res.statusCode == 200) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -54,8 +57,9 @@ class AdminService {
         // Save admin info to provider
         adminProvider.setAdmin(jsonEncode(admin.toMap()));
         
-        // Save token to shared preferences
-        await prefs.setString('admin-token', token);
+        // Save token to shared preferences - use consistent key
+        await prefs.setString(_adminTokenKey, token);
+        await prefs.setString(_adminNameKey, responseData['admin']['name']); 
         return true;
       } else {
         throw jsonDecode(res.body)['msg'] ?? 'An error occurred during admin sign in';
@@ -71,7 +75,7 @@ class AdminService {
     try {
       var adminProvider = Provider.of<AdminProvider>(context, listen: false);
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('admin-token');
+      String? token = prefs.getString(_adminTokenKey);
       
       if (token == null || token.isEmpty) {
         return false;
@@ -87,7 +91,7 @@ class AdminService {
       );
       
       if (tokenRes.statusCode != 200) {
-        prefs.setString('admin-token', '');
+        prefs.setString(_adminTokenKey, '');
         return false;
       }
       
@@ -95,7 +99,7 @@ class AdminService {
       if (response == true) {
         // If token is valid, get admin data
         http.Response adminRes = await http.get(
-          Uri.parse('${Constants.uri}/admin'),
+          Uri.parse('${Constants.uri}/api/admin'),
           headers: <String, String>{
             'Content-Type': 'application/json; charset=UTF-8',
             'x-auth-token': token,
@@ -130,7 +134,8 @@ class AdminService {
     try {
       var adminProvider = Provider.of<AdminProvider>(context, listen: false);
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.setString('admin-token', '');
+      await prefs.setString(_adminTokenKey, '');
+      await prefs.remove(_adminNameKey);
       adminProvider.clearAdmin();
       
       Navigator.pushNamedAndRemoveUntil(
@@ -146,7 +151,7 @@ class AdminService {
   Future<List<RecyclingCenter>> getRecyclingCenters(BuildContext context) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('admin-token');
+      String? token = prefs.getString(_adminTokenKey);
       
       if (token == null || token.isEmpty) {
         throw 'Not authenticated. Please login again.';
@@ -175,26 +180,35 @@ class AdminService {
   Future<void> addRecyclingCenter(BuildContext context, RecyclingCenter center) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('admin-token');
+      String? token = prefs.getString(_adminTokenKey);
       
       if (token == null || token.isEmpty) {
         throw 'Not authenticated. Please login again.';
       }
       
-      http.Response res = await http.post(
+      // Debug log
+      print('Using admin token for request: ${token.length > 10 ? token.substring(0, 10) + '...' : token}');
+      
+      final response = await http.post(
         Uri.parse('${Constants.uri}/api/admin/recycling-centers'),
-        body: center.toJson(),
-        headers: <String, String>{
+        headers: {
           'Content-Type': 'application/json; charset=UTF-8',
           'x-auth-token': token,
         },
+        body: jsonEncode(center.toMap()),
       );
       
-      if (res.statusCode != 201) {
-        throw jsonDecode(res.body)['msg'] ?? 'Failed to add recycling center';
+      print('Response status: ${response.statusCode}');
+      
+      if (response.statusCode == 201) {
+        showSnackBar(context, 'Recycling center added successfully');
+      } else {
+        final errorMsg = jsonDecode(response.body)['msg'] ?? 'Failed to add recycling center';
+        throw errorMsg;
       }
     } catch (e) {
-      showSnackBar(context, e.toString());
+      print('Error in addRecyclingCenter: $e');
+      showSnackBar(context, 'Error: $e');
       rethrow;
     }
   }
@@ -202,7 +216,7 @@ class AdminService {
   Future<void> updateRecyclingCenter(BuildContext context, String id, RecyclingCenter center) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('admin-token');
+      String? token = prefs.getString(_adminTokenKey);
       
       if (token == null || token.isEmpty) {
         throw 'Not authenticated. Please login again.';
@@ -210,7 +224,7 @@ class AdminService {
       
       http.Response res = await http.put(
         Uri.parse('${Constants.uri}/api/admin/recycling-centers/$id'),
-        body: center.toJson(),
+        body: jsonEncode(center.toMap()),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'x-auth-token': token,
@@ -229,7 +243,7 @@ class AdminService {
   Future<void> deleteRecyclingCenter(BuildContext context, String id) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('admin-token');
+      String? token = prefs.getString(_adminTokenKey);
       
       if (token == null || token.isEmpty) {
         throw 'Not authenticated. Please login again.';

@@ -61,7 +61,7 @@ class _AddRecyclingCenterScreenState extends State<AddRecyclingCenterScreen> {
         operatingHours: _hoursController.text,
         website: _websiteController.text,
       );
-
+      
       await _wasteService.addRecyclingCenter(context, newCenter);
       
       if (mounted) {

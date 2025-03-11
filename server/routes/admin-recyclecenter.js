@@ -55,7 +55,7 @@ router.post('/api/admin/tokenIsValid', async (req, res) => {
     const token = req.header('x-auth-token');
     if (!token) return res.json(false);
 
-    const verified = jwt.verify(token, process.env.JWT_SECRET);
+    const verified = jwt.verify(token, "adminSecretKey");
     if (!verified) return res.json(false);
 
     const admin = await Admin.findById(verified.id);
@@ -68,7 +68,7 @@ router.post('/api/admin/tokenIsValid', async (req, res) => {
 });
 
 // Get Admin Data
-router.get('/admin', adminAuth, async (req, res) => {
+router.get('/api/admin', adminAuth, async (req, res) => {
   try {
     const admin = await Admin.findById(req.adminId);
     if (!admin) {

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:math';
 import 'package:ecopulse_local/waste_management/waste_service.dart';
 import 'package:ecopulse_local/models/recyclingcenter.dart';
+import 'addrecycle.dart';
 
 class RecyclingCentersScreen extends StatefulWidget {
   const RecyclingCentersScreen({Key? key}) : super(key: key);
@@ -33,7 +34,7 @@ class _RecyclingCentersScreenState extends State<RecyclingCentersScreen> {
 
   Future<void> _getCurrentLocation() async {
   try {
-    setState(() => _isLoading = true); // Show loading spinner
+    setState(() => _isLoading = true);
 
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -51,8 +52,10 @@ class _RecyclingCentersScreenState extends State<RecyclingCentersScreen> {
 
     setState(() {
       _userLocation = position;
-      _isLoading = false;
     });
+
+    // Load recycling centers after getting location
+    await _loadRecyclingCenters();
 
     if (_mapController != null) {
       _mapController!.animateCamera(

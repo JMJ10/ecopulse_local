@@ -4,31 +4,32 @@ const Admin = require('../models/admin');
 
 const adminAuth = async (req, res, next) => {
   try {
-    const token = req.header('x-auth-token');
+    const token = req.header('admin-token');
+    
     if (!token) {
-      return res.status(401).json({ msg: 'No auth token, access denied' });
+      return res.status(401).json({ msg: 'No authentication token, access denied' });
     }
-
-    const verified = jwt.verify(token, "adminSecretKey");
+    
+    const verified = jwt.verify(token, process.env.ADMIN_JWT_SECRET || "adminSecretKey");
     if (!verified) {
-      return res.status(401).json({ msg: 'Token verification failed, access denied' });
+      return res.status(401).json({ msg: 'Token verification failed, authorization denied' });
     }
-
-    // Get admin details including permissions
+    
+    // Add this console log to debug
+    console.log("Admin ID from token:", verified.id);
+    
     const admin = await Admin.findById(verified.id);
     if (!admin) {
-      return res.status(401).json({ msg: 'Admin not found' });
+      return res.status(401).json({ msg: 'Admin not found, access denied' });
     }
-
-    req.adminId = verified.id;
-    req.admin = {
-      role: admin.role,
-      permissions: admin.permissions
-    };
     
+    req.admin = admin;
+    req.adminId = verified.id;
     next();
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    // Log the specific error for debugging
+    console.error("Admin auth error:", e.message);
+    res.status(401).json({ msg: 'Invalid authentication token' });
   }
 };
 

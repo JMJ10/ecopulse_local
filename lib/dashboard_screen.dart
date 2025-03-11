@@ -5,6 +5,8 @@ import 'package:ecopulse_local/carbon_emission/carbon_emission_screen.dart';
 import 'sustainable_transportation_screen.dart';
 import 'profile_screen.dart';
 import 'package:ecopulse_local/services/auth_services.dart';
+import 'ecolearn_screen.dart';
+
 
 class DashboardScreen extends StatelessWidget {
   final AuthService _authService = AuthService();
@@ -28,6 +30,13 @@ class DashboardScreen extends StatelessWidget {
       'color': Colors.green,
       'screen': SustainableTransportationScreen(),
     },
+    {
+    'title': 'EcoLearn',
+    'icon': Icons.school,
+    'color': Colors.green.shade700,
+    'screen': EcoLearnScreen(),
+    },
+
   ];
 
   DashboardScreen({super.key});
@@ -165,6 +174,7 @@ class DashboardScreen extends StatelessWidget {
           },
         ),
       ),
+      
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(

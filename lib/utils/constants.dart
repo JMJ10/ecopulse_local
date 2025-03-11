@@ -1,3 +1,5 @@
 class Constants {
-  static String uri = 'https://ecopulselocal-production.up.railway.app';
+  static String uri = 'http://10.0.2.2:3000';
+
+  static getToken() {}
 }

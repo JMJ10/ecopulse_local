@@ -23,7 +23,7 @@ class WasteService {
       
       http.Response res = await http.post(
         Uri.parse('${Constants.uri}/api/waste/log'),
-        body: log.toJson(),
+        body: jsonEncode(log.toMap()),  // Fixed: Use jsonEncode
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
           'x-auth-token': token,
@@ -71,48 +71,48 @@ class WasteService {
   
   // Get recycling centers
   Future<List<RecyclingCenter>> getRecyclingCenters(
-  BuildContext context, {
-  double? latitude,
-  double? longitude,
-}) async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('x-auth-token');
-    
-    if (token == null || token.isEmpty) {
-      throw 'Not authenticated. Please login again.';
+    BuildContext context, {
+    double? latitude,
+    double? longitude,
+  }) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
+      
+      if (token == null || token.isEmpty) {
+        throw 'Not authenticated. Please login again.';
+      }
+      
+      Uri uri = Uri.parse('${Constants.uri}/api/waste/recycling-centers');
+      
+      // Add location parameters if available
+      if (latitude != null && longitude != null) {
+        uri = uri.replace(queryParameters: {
+          'latitude': latitude.toString(),
+          'longitude': longitude.toString(),
+          'radius': '10', // Default radius in km
+        });
+      }
+      
+      http.Response res = await http.get(
+        uri,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': token,
+        },
+      );
+      
+      if (res.statusCode != 200) {
+        throw jsonDecode(res.body)['msg'] ?? 'Failed to retrieve recycling centers';
+      }
+      
+      List<dynamic> centersJson = jsonDecode(res.body);
+      return centersJson.map((center) => RecyclingCenter.fromMap(center)).toList();
+    } catch (e) {
+      showSnackBar(context, e.toString());
+      rethrow;
     }
-    
-    Uri uri = Uri.parse('${Constants.uri}/api/waste/recycling-centers');
-    
-    // Add location parameters if available
-    if (latitude != null && longitude != null) {
-      uri = uri.replace(queryParameters: {
-        'latitude': latitude.toString(),
-        'longitude': longitude.toString(),
-        'radius': '10', // Default radius in km
-      });
-    }
-    
-    http.Response res = await http.get(
-      uri,
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'x-auth-token': token,
-      },
-    );
-    
-    if (res.statusCode != 200) {
-      throw jsonDecode(res.body)['msg'] ?? 'Failed to retrieve recycling centers';
-    }
-    
-    List<dynamic> centersJson = jsonDecode(res.body);
-    return centersJson.map((center) => RecyclingCenter.fromMap(center)).toList();
-  } catch (e) {
-    showSnackBar(context, e.toString());
-    rethrow;
   }
-}
   
   // Get collection schedules
   Future<List<CollectionSchedule>> getCollectionSchedules(BuildContext context) async {
@@ -150,31 +150,30 @@ class WasteService {
     }
   }
 
-  
-Future<void> addRecyclingCenter(BuildContext context, RecyclingCenter center) async {
-  try {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? token = prefs.getString('x-auth-token');
-    
-    if (token == null || token.isEmpty) {
-      throw 'Not authenticated. Please login again.';
+  Future<void> addRecyclingCenter(BuildContext context, RecyclingCenter center) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('x-auth-token');
+      
+      if (token == null || token.isEmpty) {
+        throw 'Not authenticated. Please login again.';
+      }
+      
+      http.Response res = await http.post(
+        Uri.parse('${Constants.uri}/api/waste/recycling-centers'),
+        body: jsonEncode(center.toMap()),  // Fixed: Use jsonEncode
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+          'x-auth-token': token,
+        },
+      );
+      
+      if (res.statusCode != 200 && res.statusCode != 201) {
+        throw jsonDecode(res.body)['msg'] ?? 'Failed to add recycling center';
+      }
+    } catch (e) {
+      showSnackBar(context, e.toString());
+      rethrow;
     }
-    
-    http.Response res = await http.post(
-      Uri.parse('${Constants.uri}/api/waste/recycling-centers'),
-      body: center.toJson(),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-        'x-auth-token': token,
-      },
-    );
-    
-    if (res.statusCode != 200 && res.statusCode != 201) {
-      throw jsonDecode(res.body)['msg'] ?? 'Failed to add recycling center';
-    }
-  } catch (e) {
-    showSnackBar(context, e.toString());
-    rethrow;
   }
-}
 }

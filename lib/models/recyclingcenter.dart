@@ -5,21 +5,21 @@ class RecyclingCenter {
   final String id;
   final String name;
   final String address;
-  final String? phone;
+  final String phone;
   final List<String> acceptedMaterials;
   final LatLng location;
-  final String? operatingHours;
-  final String? website;
+  final String operatingHours;
+  final String website;
 
   RecyclingCenter({
     required this.id,
     required this.name,
     required this.address,
-    this.phone,
+    required this.phone,
     required this.acceptedMaterials,
     required this.location,
-    this.operatingHours,
-    this.website,
+    required this.operatingHours,
+    required this.website,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,43 +29,46 @@ class RecyclingCenter {
       'address': address,
       'phone': phone,
       'acceptedMaterials': acceptedMaterials,
-      'location': location != null 
-          ? {
-              'type': 'Point',
-              'coordinates': [location!.longitude, location!.latitude]
-            }
-          : null,
+      'location': {
+        'latitude': location.latitude,
+        'longitude': location.longitude,
+      },
       'operatingHours': operatingHours,
       'website': website,
     };
   }
 
+  String toJson() => jsonEncode(toMap());
+
   factory RecyclingCenter.fromMap(Map<String, dynamic> map) {
-    final locationData = map['location'];
-    LatLng? location;
-    
-    if (locationData != null && locationData['coordinates'] is List) {
-      final coords = locationData['coordinates'] as List;
-      if (coords.length == 2) {
-        // MongoDB stores as [longitude, latitude]
-        location = LatLng(coords[1].toDouble(), coords[0].toDouble());
-      }
+    // Handle different location formats from API
+    LatLng locationLatLng;
+    if (map['location'] is Map) {
+      locationLatLng = LatLng(
+        map['location']['latitude'] is String 
+            ? double.parse(map['location']['latitude']) 
+            : map['location']['latitude'],
+        map['location']['longitude'] is String 
+            ? double.parse(map['location']['longitude']) 
+            : map['location']['longitude'],
+      );
+    } else {
+      // Handle potential alternate format
+      locationLatLng = LatLng(0, 0); // Default if location is missing
     }
 
     return RecyclingCenter(
-      id: map['_id'] ?? '',
+      id: map['_id'] ?? map['id'] ?? '',
       name: map['name'] ?? '',
       address: map['address'] ?? '',
-      phone: map['phone'],
+      phone: map['phone'] ?? '',
       acceptedMaterials: List<String>.from(map['acceptedMaterials'] ?? []),
-      location: location ?? LatLng(0, 0),
-      operatingHours: map['operatingHours'],
-      website: map['website'],
+      location: locationLatLng,
+      operatingHours: map['operatingHours'] ?? '',
+      website: map['website'] ?? '',
     );
   }
 
-  String toJson() => json.encode(toMap());
-
   factory RecyclingCenter.fromJson(String source) => 
-      RecyclingCenter.fromMap(json.decode(source));
+      RecyclingCenter.fromMap(jsonDecode(source));
 }
