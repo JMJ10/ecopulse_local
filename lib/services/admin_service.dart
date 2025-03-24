@@ -11,7 +11,7 @@ import '../providers/admin_provider.dart';
 
 class AdminService {
   // Use a consistent token key name throughout the app
-  static const String _adminTokenKey = 'admin_token';
+  static const String _adminTokenKey = 'admin-token';
   static const String _adminNameKey = 'admin_name';
 
   // Admin Authentication
@@ -21,7 +21,7 @@ class AdminService {
     required String password,
   }) async {
     try {
-      print('Attempting login with email: $email');
+      print('Attempting admin login with email: $email');
       var adminProvider = Provider.of<AdminProvider>(context, listen: false);
       
       http.Response res = await http.post(
@@ -36,36 +36,28 @@ class AdminService {
       );
       
       print('Response status: ${res.statusCode}');
+      print('Response body: ${res.body}');
       
       if (res.statusCode == 200) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         
-        // Parse the response and extract token and admin data
+        // Parse the response
         var responseData = jsonDecode(res.body);
-        String token = responseData['token'];
         
-        // Create admin object with token
-        Admin admin = Admin(
-          id: responseData['admin']['id'],
-          name: responseData['admin']['name'],
-          email: responseData['admin']['email'],
-          role: responseData['admin']['role'],
-          permissions: Map<String, bool>.from(responseData['admin']['permissions']),
-          token: token,
-        );
-        
-        // Save admin info to provider
-        adminProvider.setAdmin(jsonEncode(admin.toMap()));
+        // Store the raw response in the provider (similar to how user auth works)
+        adminProvider.setAdmin(res.body);
         
         // Save token to shared preferences - use consistent key
-        await prefs.setString(_adminTokenKey, token);
-        await prefs.setString(_adminNameKey, responseData['admin']['name']); 
+        await prefs.setString(_adminTokenKey, responseData['token']);
+        await prefs.setString(_adminNameKey, responseData['admin']['name']);
+        
+        print('Admin token saved: ${responseData['token'].substring(0, 10)}...');
         return true;
       } else {
         throw jsonDecode(res.body)['msg'] ?? 'An error occurred during admin sign in';
       }
     } catch (e) {
-      print('Error details: $e');
+      print('Error details in signInAdmin: $e');
       showSnackBar(context, e.toString());
       return false;
     }
@@ -77,7 +69,11 @@ class AdminService {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString(_adminTokenKey);
       
+      print("Retrieved admin token from SharedPreferences: ${token != null ? (token.length > 10 ? token.substring(0, 10) + '...' : token) : 'null'}");
+      
       if (token == null || token.isEmpty) {
+        print("No admin token found in SharedPreferences");
+        await prefs.setString(_adminTokenKey, '');
         return false;
       }
 
@@ -86,46 +82,58 @@ class AdminService {
         Uri.parse('${Constants.uri}/api/admin/tokenIsValid'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token,
+          'admin-token': token,
         },
       );
       
+      print("Admin token validation response status: ${tokenRes.statusCode}");
+      
       if (tokenRes.statusCode != 200) {
-        prefs.setString(_adminTokenKey, '');
+        print("Admin token validation failed with status: ${tokenRes.statusCode}");
+        await prefs.setString(_adminTokenKey, '');
         return false;
       }
       
-      var response = jsonDecode(tokenRes.body);
-      if (response == true) {
-        // If token is valid, get admin data
-        http.Response adminRes = await http.get(
-          Uri.parse('${Constants.uri}/api/admin'),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-            'x-auth-token': token,
-          },
-        );
+      try {
+        var response = jsonDecode(tokenRes.body);
+        print("Admin token validation response: $response");
         
-        if (adminRes.statusCode == 200) {
-          // Create admin object with fetched data
-          var adminData = jsonDecode(adminRes.body);
-          Admin admin = Admin(
-            id: adminData['id'],
-            name: adminData['name'],
-            email: adminData['email'],
-            role: adminData['role'],
-            permissions: Map<String, bool>.from(adminData['permissions']),
-            token: token,
+        if (response == true) {
+          // Token is valid, get admin data
+          http.Response adminRes = await http.get(
+            Uri.parse('${Constants.uri}/api/admin'),
+            headers: <String, String>{
+              'Content-Type': 'application/json; charset=UTF-8',
+              'admin-token': token,
+            },
           );
           
-          // Update admin provider
-          adminProvider.setAdmin(jsonEncode(admin.toMap()));
-          return true;
+          print("Admin data response status: ${adminRes.statusCode}");
+          print("Admin data response body: ${adminRes.body}");
+          
+          if (adminRes.statusCode == 200) {
+            // Set admin data directly from response (matching user auth pattern)
+            adminProvider.setAdmin(adminRes.body);
+            print("Successfully retrieved and set admin data");
+            return true;
+          } else {
+            print("Failed to get admin data, status code: ${adminRes.statusCode}");
+            await prefs.setString(_adminTokenKey, '');
+            return false;
+          }
+        } else {
+          print("Admin token validation returned false");
+          await prefs.setString(_adminTokenKey, '');
+          return false;
         }
+      } catch (e) {
+        print("Error parsing admin token response: ${tokenRes.body}");
+        print("Exception in token validation: $e");
+        await prefs.setString(_adminTokenKey, '');
+        return false;
       }
-      return false;
     } catch (e) {
-      print('Error in getAdminStatus: $e');
+      print('General error in getAdminStatus: $e');
       return false;
     }
   }
@@ -134,6 +142,8 @@ class AdminService {
     try {
       var adminProvider = Provider.of<AdminProvider>(context, listen: false);
       SharedPreferences prefs = await SharedPreferences.getInstance();
+      
+      print("Logging out admin user");
       await prefs.setString(_adminTokenKey, '');
       await prefs.remove(_adminNameKey);
       adminProvider.clearAdmin();
@@ -143,7 +153,10 @@ class AdminService {
         '/home', 
         (route) => false,
       );
+      
+      print("Admin logout complete");
     } catch (e) {
+      print("Error in adminLogout: $e");
       showSnackBar(context, e.toString());
     }
   }
@@ -161,7 +174,7 @@ class AdminService {
         Uri.parse('${Constants.uri}/api/admin/recycling-centers'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token,
+          'admin-token': token,
         },
       );
       
@@ -193,7 +206,7 @@ class AdminService {
         Uri.parse('${Constants.uri}/api/admin/recycling-centers'),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token,
+          'admin-token': token,
         },
         body: jsonEncode(center.toMap()),
       );
@@ -227,7 +240,7 @@ class AdminService {
         body: jsonEncode(center.toMap()),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token,
+          'admin-token': token,
         },
       );
       
@@ -253,7 +266,7 @@ class AdminService {
         Uri.parse('${Constants.uri}/api/admin/recycling-centers/$id'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token,
+          'admin-token': token,
         },
       );
       

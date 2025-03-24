@@ -1,7 +1,9 @@
+import 'package:ecopulse_local/services/admin_service.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:ecopulse_local/models/recyclingcenter.dart';
 import 'package:ecopulse_local/waste_management/waste_service.dart';
+import 'package:ecopulse_local/services/location_service.dart';
 
 class AddRecyclingCenterScreen extends StatefulWidget {
   const AddRecyclingCenterScreen({Key? key, RecyclingCenter? center}) : super(key: key);
@@ -20,7 +22,8 @@ class _AddRecyclingCenterScreenState extends State<AddRecyclingCenterScreen> {
   
   final List<String> _acceptedMaterials = [];
   LatLng? _selectedLocation;
-  final WasteService _wasteService = WasteService();
+  final AdminService _adminService = AdminService();
+  final LocationService _locationService = LocationService();
   bool _isLoading = false;
 
   // Predefined list of common recyclable materials
@@ -28,6 +31,20 @@ class _AddRecyclingCenterScreenState extends State<AddRecyclingCenterScreen> {
     'Paper', 'Cardboard', 'Plastic', 'Glass', 'Metal',
     'Electronics', 'Batteries', 'Oil', 'Tires', 'Textiles'
   ];
+  @override
+  void initState() {
+    super.initState();
+    _initializeLocation();
+  }
+  
+  Future<void> _initializeLocation() async {
+    final position = await LocationService.getCurrentLocation(context);
+    if (position != null && mounted) {
+      setState(() {
+        _selectedLocation = LatLng(position.latitude, position.longitude);
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -62,7 +79,7 @@ class _AddRecyclingCenterScreenState extends State<AddRecyclingCenterScreen> {
         website: _websiteController.text,
       );
       
-      await _wasteService.addRecyclingCenter(context, newCenter);
+      await _adminService.addRecyclingCenter(context, newCenter);
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

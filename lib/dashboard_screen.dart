@@ -6,7 +6,7 @@ import 'sustainable_transportation_screen.dart';
 import 'profile_screen.dart';
 import 'package:ecopulse_local/services/auth_services.dart';
 import 'ecolearn_screen.dart';
-
+import 'sustainability_insights_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final AuthService _authService = AuthService();
@@ -36,6 +36,12 @@ class DashboardScreen extends StatelessWidget {
     'color': Colors.green.shade700,
     'screen': EcoLearnScreen(),
     },
+    {
+      'title': 'Sustainability Insights',
+      'icon': Icons.insights,
+      'color': Colors.purple,
+      'screen': SustainabilityInsightsScreen(),
+    },
 
   ];
 
@@ -43,7 +49,52 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return WillPopScope(
+    onWillPop: () async {
+      // You can show a dialog here asking if the user wants to exit the app
+      // Return true to allow back button (exit app), false to prevent it
+      return await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Exit App', 
+          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+        ),
+        content: Text('Are you sure you want to exit the app?'),
+        backgroundColor: Colors.green[50], // Light green background
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: Colors.green, width: 2),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.green, // Red for "No"
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text('No', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green, // Green button
+              foregroundColor: Colors.white,
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text('Yes', style: TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    ) ?? false;
+  },
+      child: Scaffold(
       appBar: AppBar(
         title: Text('Eco Practices'),
         backgroundColor: Colors.green,
@@ -200,12 +251,13 @@ class DashboardScreen extends StatelessWidget {
           );
         },
         backgroundColor: Colors.green,
+        tooltip: 'Chat with EcoPulse AI',
         child: Icon(
           Icons.chat_bubble_outline,
           color: Colors.white,
         ),
-        tooltip: 'Chat with EcoPulse AI',
       ),
+    )
     );
   }
 }

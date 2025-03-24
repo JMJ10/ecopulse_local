@@ -92,10 +92,9 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         // Navigate to dashboard after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
-        );
+        Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => DashboardScreen()),
+        (route) => false, // This removes all previous routes
+        );  
       }
     } catch (e) {
       if (mounted) {

@@ -70,49 +70,46 @@ class WasteService {
   }
   
   // Get recycling centers
-  Future<List<RecyclingCenter>> getRecyclingCenters(
-    BuildContext context, {
-    double? latitude,
-    double? longitude,
-  }) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('x-auth-token');
-      
-      if (token == null || token.isEmpty) {
-        throw 'Not authenticated. Please login again.';
-      }
-      
-      Uri uri = Uri.parse('${Constants.uri}/api/waste/recycling-centers');
-      
-      // Add location parameters if available
-      if (latitude != null && longitude != null) {
-        uri = uri.replace(queryParameters: {
-          'latitude': latitude.toString(),
-          'longitude': longitude.toString(),
-          'radius': '10', // Default radius in km
-        });
-      }
-      
-      http.Response res = await http.get(
-        uri,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-          'x-auth-token': token,
-        },
-      );
-      
-      if (res.statusCode != 200) {
-        throw jsonDecode(res.body)['msg'] ?? 'Failed to retrieve recycling centers';
-      }
-      
-      List<dynamic> centersJson = jsonDecode(res.body);
-      return centersJson.map((center) => RecyclingCenter.fromMap(center)).toList();
-    } catch (e) {
-      showSnackBar(context, e.toString());
-      rethrow;
+    // In waste_service.dart
+Future<List<RecyclingCenter>> getRecyclingCenters(
+  BuildContext context, {
+  double? latitude,
+  double? longitude,
+}) async {
+  try {
+    // Construct the URL with optional location parameters
+    String url = '${Constants.uri}/api/recycling-centers';
+    
+    // Add query parameters for location-based search if coordinates are provided
+    if (latitude != null && longitude != null) {
+      url += '?lat=$latitude&lng=$longitude';
     }
+    
+    // Make the API request
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+    );
+    
+    if (response.statusCode != 200) {
+      throw jsonDecode(response.body)['msg'] ?? 'Failed to load recycling centers';
+    }
+    
+    // Parse the response
+    List<dynamic> centersJson = jsonDecode(response.body);
+    return centersJson.map((center) => RecyclingCenter.fromMap(center)).toList();
+  } catch (e) {
+    // Show error message
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+    rethrow;
   }
+}
   
   // Get collection schedules
   Future<List<CollectionSchedule>> getCollectionSchedules(BuildContext context) async {
@@ -150,7 +147,7 @@ class WasteService {
     }
   }
 
-  Future<void> addRecyclingCenter(BuildContext context, RecyclingCenter center) async {
+  /*Future<void> addRecyclingCenter(BuildContext context, RecyclingCenter center) async {
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? token = prefs.getString('x-auth-token');
@@ -175,5 +172,5 @@ class WasteService {
       showSnackBar(context, e.toString());
       rethrow;
     }
-  }
+  }*/
 }

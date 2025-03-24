@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:ecopulse_local/carbon_emission/carbon_footprint_calculator.dart';
+import 'package:ecopulse_local/widgets/mini_recommendation.dart';
 
 class CarbonEmissionScreen extends StatefulWidget {
   const CarbonEmissionScreen({Key? key}) : super(key: key);
@@ -269,6 +270,8 @@ class _CarbonEmissionScreenState extends State<CarbonEmissionScreen> {
                 ),
               ),
             ),
+            //MiniRecommendationsWidget(source: ) // Ensure 'type' is a named parameter in the widget's constructor
+
     );
   }
 }

@@ -1,11 +1,12 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'dart:math';
-import 'package:ecopulse_local/waste_management/waste_service.dart';
 import 'package:ecopulse_local/models/recyclingcenter.dart';
-import 'addrecycle.dart';
+import 'package:ecopulse_local/services/location_service.dart';
+import 'package:ecopulse_local/waste_management/waste_service.dart';
+import 'package:ecopulse_local/utils/map_helper.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RecyclingCentersScreen extends StatefulWidget {
   const RecyclingCentersScreen({Key? key}) : super(key: key);
@@ -15,149 +16,190 @@ class RecyclingCentersScreen extends StatefulWidget {
 }
 
 class _RecyclingCentersScreenState extends State<RecyclingCentersScreen> {
-  final WasteService _wasteService = WasteService();
-  bool _isLoading = true;
-  List<RecyclingCenter> _centers = [];
-  String? _errorMessage;
-  Position? _userLocation;
+  final Completer<GoogleMapController> _mapControllerCompleter = Completer();
   GoogleMapController? _mapController;
-  Set<Marker> _markers = {};
+  final WasteService _wasteService = WasteService();
   
-  // Keep track of selected center for the bottom sheet
+  List<RecyclingCenter> _centers = [];
+  Set<Marker> _markers = {};
+  Position? _userLocation;
+  LatLng? _userLatLng;
+  bool _isLoading = true;
+  bool _error = false;
+  String _errorMessage = '';
+  bool _isMapReady = false;
+  
+  // Selected center to show details
   RecyclingCenter? _selectedCenter;
-
+  
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    _initializeMap();
   }
-
-  Future<void> _getCurrentLocation() async {
-  try {
-    setState(() => _isLoading = true);
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw 'Location permissions are denied';
-      }
-    }
-
-    final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
-    print("User Location: ${position.latitude}, ${position.longitude}");
-
+  
+  Future<void> _initializeMap() async {
     setState(() {
-      _userLocation = position;
+      _isLoading = true;
+      _error = false;
     });
-
-    // Load recycling centers after getting location
-    await _loadRecyclingCenters();
-
-    if (_mapController != null) {
-      _mapController!.animateCamera(
-        CameraUpdate.newLatLng(
-          LatLng(position.latitude, position.longitude),
-        ),
-      );
-    }
-  } catch (e) {
-    print("Location Error: $e");
-    setState(() {
-      _errorMessage = 'Failed to get location: $e';
-      _isLoading = false;
-    });
-  }
-}
-
-
-
-
-  Future<void> _loadRecyclingCenters() async {
+    
     try {
-      final centers = await _wasteService.getRecyclingCenters(
-        context,
-        latitude: _userLocation?.latitude,
-        longitude: _userLocation?.longitude,
-      );
+      // 1. Get user location
+      await _getCurrentLocation();
       
-      // Create markers for each center
-      final markers = centers.map((center) => Marker(
-        markerId: MarkerId(center.id),
-        position: LatLng(
-          center.location!.latitude,
-          center.location!.longitude,
-        ),
-        infoWindow: InfoWindow(
-          title: center.name,
-          snippet: center.address,
-        ),
-        onTap: () {
-          setState(() => _selectedCenter = center);
-          _showCenterDetails(center);
-        },
-      )).toSet();
-
-      // Add user location marker
-      if (_userLocation != null) {
-        markers.add(Marker(
-          markerId: const MarkerId('user_location'),
-          position: LatLng(_userLocation!.latitude, _userLocation!.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          infoWindow: const InfoWindow(title: 'Your Location'),
-        ));
-      }
-
-      setState(() {
-        _centers = centers;
-        _markers = markers;
-        _isLoading = false;
-      });
-
-      // Move camera to show all markers
-      if (_mapController != null && _userLocation != null) {
-        _fitMarkersAndUserLocation();
-      }
+      // 2. Fetch recycling centers (passing user location for potential sorting by distance)
+      await _loadRecyclingCenters();
+      
+      // 3. Update map markers
+      _updateMapMarkers();
     } catch (e) {
       setState(() {
-        _errorMessage = 'Failed to load recycling centers: $e';
+        _error = true;
+        _errorMessage = e.toString();
+      });
+    } finally {
+      setState(() {
         _isLoading = false;
       });
     }
   }
-
-  void _fitMarkersAndUserLocation() {
-    if (_centers.isEmpty || _userLocation == null) return;
-
-    // Create bounds that include all markers and user location
-    LatLngBounds bounds = LatLngBounds(
-  southwest: LatLng(_userLocation!.latitude, _userLocation!.longitude),
-  northeast: LatLng(_userLocation!.latitude, _userLocation!.longitude),
-);
-
-for (var center in _centers) {
-  final LatLng centerLatLng = LatLng(center.location!.latitude, center.location!.longitude);
-  bounds = LatLngBounds(
-    southwest: LatLng(
-      min(bounds.southwest.latitude, centerLatLng.latitude),
-      min(bounds.southwest.longitude, centerLatLng.longitude),
-    ),
-    northeast: LatLng(
-      max(bounds.northeast.latitude, centerLatLng.latitude),
-      max(bounds.northeast.longitude, centerLatLng.longitude),
-    ),
-  );
-}
-
-    // Add padding to bounds
-    _mapController?.animateCamera(
-      CameraUpdate.newLatLngBounds(bounds, 50.0),
+  
+  Future<void> _getCurrentLocation() async {
+    try {
+      Position? position = await LocationService.getCurrentLocation(context);
+      
+      if (position != null) {
+        setState(() {
+          _userLocation = position;
+          _userLatLng = LatLng(position.latitude, position.longitude);
+        });
+      }
+    } catch (e) {
+      // Handle location errors
+      print('Error getting location: $e');
+      // We'll still show the map with recycling centers even if user location fails
+    }
+  }
+  
+  Future<void> _loadRecyclingCenters() async {
+    try {
+      // If we have user location, use it for location-based search
+      if (_userLatLng != null) {
+        _centers = await _wasteService.getRecyclingCenters(
+          context,
+          latitude: _userLatLng!.latitude,
+          longitude: _userLatLng!.longitude,
+        );
+      } else {
+        // Otherwise just get all centers
+        _centers = await _wasteService.getRecyclingCenters(context);
+      }
+    } catch (e) {
+      print('Error loading recycling centers: $e');
+      rethrow;
+    }
+  }
+  
+  void _updateMapMarkers() {
+    // Create markers for recycling centers
+    Set<Marker> markers = MapHelper.generateCenterMarkers(
+      _centers, 
+      (center) {
+        setState(() {
+          _selectedCenter = center;
+        });
+      },
+    );
+    
+    // Add user location marker if available
+    if (_userLatLng != null) {
+      markers.add(MapHelper.generateUserMarker(_userLatLng!));
+    }
+    
+    setState(() {
+      _markers = markers;
+    });
+  }
+  
+  Future<void> _moveToCurrentLocation() async {
+    if (_userLatLng == null) {
+      // Try to get current location again
+      await _getCurrentLocation();
+      
+      if (_userLatLng == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to get your current location')),
+        );
+        return;
+      }
+    }
+    
+    final GoogleMapController controller = await _mapControllerCompleter.future;
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(
+          target: _userLatLng!,
+          zoom: 15,
+        ),
+      ),
     );
   }
-
+  
+  Future<void> _fitAllMarkers() async {
+    if (_centers.isEmpty) return;
+    
+    final GoogleMapController controller = await _mapControllerCompleter.future;
+    
+    // Calculate bounds to fit all markers and user location
+    final bounds = MapHelper.calculateBounds(_centers, _userLatLng);
+    
+    // Animate camera to show all markers
+    controller.animateCamera(
+      CameraUpdate.newLatLngBounds(bounds, 50), // 50 is padding
+    );
+  }
+  
+  void _centerMapOnLocation(LatLng location) {
+    _mapController?.animateCamera(
+      CameraUpdate.newLatLngZoom(location, 16.0),
+    );
+  }
+  
+  Future<void> _openInGoogleMaps(RecyclingCenter center) async {
+    final url = 'https://www.google.com/maps/dir/?api=1'
+        '&destination=${center.location.latitude},${center.location.longitude}'
+        '&travelmode=driving';
+    
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url));
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open Google Maps')),
+        );
+      }
+    }
+  }
+  
+  Widget _buildInfoRow(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
   void _showCenterDetails(RecyclingCenter center) {
     showModalBottomSheet(
       context: context,
@@ -196,10 +238,12 @@ for (var center in _centers) {
               ),
               const SizedBox(height: 16),
               _buildInfoRow(Icons.location_on, center.address),
-              if (center.phone != null)
-                _buildInfoRow(Icons.phone, center.phone!),
-              if (center.operatingHours != null)
-                _buildInfoRow(Icons.access_time, center.operatingHours!),
+              if (center.phone.isNotEmpty)
+                _buildInfoRow(Icons.phone, center.phone),
+              if (center.operatingHours.isNotEmpty)
+                _buildInfoRow(Icons.access_time, center.operatingHours),
+              if (center.website.isNotEmpty)
+                _buildInfoRow(Icons.web, center.website),
               const SizedBox(height: 16),
               const Text(
                 'Accepted Materials',
@@ -218,14 +262,35 @@ for (var center in _centers) {
                 )).toList(),
               ),
               const SizedBox(height: 16),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.directions),
-                label: const Text('Get Directions'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: const EdgeInsets.all(16),
-                ),
-                onPressed: () => _openInGoogleMaps(center),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.directions),
+                      label: const Text('Get Directions'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        padding: const EdgeInsets.all(16),
+                      ),
+                      onPressed: () => _openInGoogleMaps(center),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    icon: const Icon(Icons.center_focus_strong),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _centerMapOnLocation(
+                        LatLng(center.location.latitude, center.location.longitude),
+                      );
+                    },
+                    tooltip: 'Center on map',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.grey[200],
+                      padding: const EdgeInsets.all(12),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -233,41 +298,7 @@ for (var center in _centers) {
       ),
     );
   }
-
-  Widget _buildInfoRow(IconData icon, String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.grey),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _openInGoogleMaps(RecyclingCenter center) async {
-    final url = 'https://www.google.com/maps/dir/?api=1'
-        '&destination=${center.location!.latitude},${center.location!.longitude}'
-        '&travelmode=driving';
-    
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not open Google Maps')),
-        );
-      }
-    }
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -276,14 +307,29 @@ for (var center in _centers) {
         appBar: AppBar(
           title: const Text('Recycling Centers'),
           backgroundColor: Colors.green,
-          bottom: const TabBar(
-            tabs: [
+          bottom: TabBar(
+            tabs: const [
               Tab(icon: Icon(Icons.map), text: 'Map'),
               Tab(icon: Icon(Icons.list), text: 'List'),
             ],
+            // Make the tab indicator more noticeable to encourage tab tapping
+            indicatorColor: Colors.white,
+            indicatorWeight: 3,
+            // Add label to clarify navigation method
+            labelStyle: const TextStyle(fontWeight: FontWeight.bold),
           ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _initializeMap,
+              tooltip: 'Refresh',
+            ),
+          ],
         ),
         body: TabBarView(
+          // Disable swiping between tabs to prevent accidental navigation
+          // Users will need to tap the tab bar items to switch views
+          physics: const NeverScrollableScrollPhysics(),
           children: [
             // Map View
             _buildMapView(),
@@ -291,124 +337,289 @@ for (var center in _centers) {
             _buildListView(),
           ],
         ),
+        floatingActionButton: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            FloatingActionButton(
+              heroTag: 'fitMarkers',
+              onPressed: _fitAllMarkers,
+              backgroundColor: Colors.green,
+              tooltip: 'Show all centers',
+              child: const Icon(Icons.fit_screen),
+            ),
+            const SizedBox(height: 16),
+            FloatingActionButton(
+              heroTag: 'currentLocation',
+              onPressed: _moveToCurrentLocation,
+              backgroundColor: Colors.blue,
+              tooltip: 'My location',
+              child: const Icon(Icons.my_location),
+            ),
+          ],
+        ),
       ),
     );
   }
-
+  
   Widget _buildMapView() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
     }
-
-    if (_errorMessage != null) {
-      return Center(child: Text(_errorMessage!));
-    }
-
-    return GoogleMap(
-  initialCameraPosition: CameraPosition(
-    target: _userLocation != null
-        ? LatLng(_userLocation!.latitude, _userLocation!.longitude)
-        : LatLng(10.8505, 76.2711), // Default to Kerala
-    zoom: 12,
-  ),
-  myLocationEnabled: true, // Show user's location
-  myLocationButtonEnabled: true, // Enable location button
-  zoomControlsEnabled: true, // Enable zoom controls
-  zoomGesturesEnabled: true, // Allow pinch zoom
-  scrollGesturesEnabled: true, // Allow panning/moving
-  rotateGesturesEnabled: true, // Allow rotation
-  tiltGesturesEnabled: true, // Allow tilting
-  mapToolbarEnabled: true, // Enable toolbar for navigation
-  onMapCreated: (controller) {
-    _mapController = controller;
-      _mapController!.setMapStyle(null); // Reset style (if needed)
-    if (_userLocation != null) {
-      _mapController?.animateCamera(
-        CameraUpdate.newLatLng(
-          LatLng(_userLocation!.latitude, _userLocation!.longitude),
+    
+    if (_error) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: $_errorMessage'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _initializeMap,
+              child: const Text('Try Again'),
+            ),
+          ],
         ),
       );
     }
-    else {
-    // Move to default location if GPS is unavailable
-    _mapController!.animateCamera(
-      CameraUpdate.newLatLng(LatLng(10.8505, 76.2711)), // Kerala
-    );
-  }
-  },
-);
-}
-
-
-  // Replace the _buildListView() method in the RecyclingCentersScreen with this updated version:
-
-Widget _buildListView() {
-  if (_isLoading) {
-    return const Center(child: CircularProgressIndicator());
-  }
-
-  if (_errorMessage != null) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            _errorMessage!,
-            style: const TextStyle(color: Colors.red),
-            textAlign: TextAlign.center,
+    
+    return Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: _userLatLng ?? const LatLng(10.8505, 76.2711), // Default to Kerala or user location
+            zoom: 12,
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: _getCurrentLocation,
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  return Stack(
-    children: [
-      ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _centers.length,
-        itemBuilder: (context, index) {
-          final center = _centers[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: ListTile(
-              title: Text(center.name),
-              subtitle: Text(center.address),
-              trailing: IconButton(
-                icon: const Icon(Icons.info_outline),
-                onPressed: () => _showCenterDetails(center),
-              ),
-            ),
-          );
-        },
-      ),
-      Positioned(
-        bottom: 16,
-        right: 16,
-        child: FloatingActionButton(
-          onPressed: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AddRecyclingCenterScreen(),
-              ),
-            );
-            
-            // Refresh the list if a new center was added
-            if (result == true) {
-              _loadRecyclingCenters();
-            }
+          onMapCreated: (GoogleMapController controller) {
+            _mapControllerCompleter.complete(controller);
+            _mapController = controller;
+            _isMapReady = true;
+            // Fit all markers once map is created
+            Future.delayed(const Duration(milliseconds: 300), _fitAllMarkers);
           },
-          backgroundColor: Colors.green,
-          child: const Icon(Icons.add),
+          markers: _markers,
+          myLocationEnabled: true,
+          myLocationButtonEnabled: false, // We'll use our own FAB
+          mapToolbarEnabled: false,
+          zoomControlsEnabled: false, // We'll use gestures for zooming
+          // Ensure map gestures are fully enabled
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
+        ),
+        
+        // Show selected center details at the bottom if on map view
+        if (_selectedCenter != null)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildCenterDetailsCard(),
+          ),
+      ],
+    );
+  }
+  
+  Widget _buildListView() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+    
+    if (_error) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: $_errorMessage'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _initializeMap,
+              child: const Text('Try Again'),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return _centers.isEmpty
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.location_off, size: 64, color: Colors.grey),
+                const SizedBox(height: 16),
+                const Text(
+                  'No recycling centers found in your area',
+                  style: TextStyle(fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => _initializeMap(),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                  ),
+                  child: const Text('Refresh'),
+                ),
+              ],
+            ),
+          )
+        : ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: _centers.length,
+            itemBuilder: (context, index) {
+              final center = _centers[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 16),
+                child: ListTile(
+                  title: Text(center.name),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(center.address),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Accepts: ${center.acceptedMaterials.take(3).join(", ")}${center.acceptedMaterials.length > 3 ? "..." : ""}',
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  isThreeLine: true,
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.map, color: Colors.green),
+                        onPressed: () {
+                          DefaultTabController.of(context).animateTo(0);
+                          _centerMapOnLocation(
+                            LatLng(center.location.latitude, center.location.longitude),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.info_outline, color: Colors.blue),
+                        onPressed: () => _showCenterDetails(center),
+                      ),
+                    ],
+                  ),
+                  onTap: () => _showCenterDetails(center),
+                ),
+              );
+            },
+          );
+  }
+  
+  Widget _buildCenterDetailsCard() {
+    return Card(
+      margin: const EdgeInsets.all(16),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _selectedCenter!.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close),
+                  onPressed: () {
+                    setState(() {
+                      _selectedCenter = null;
+                    });
+                  },
+                  splashRadius: 24,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(_selectedCenter!.address),
+            const SizedBox(height: 4),
+            if (_selectedCenter!.phone.isNotEmpty)
+              Text('Phone: ${_selectedCenter!.phone}'),
+            const SizedBox(height: 4),
+            if (_selectedCenter!.operatingHours.isNotEmpty)
+              Text('Hours: ${_selectedCenter!.operatingHours}'),
+            const SizedBox(height: 12),
+            const Text(
+              'Accepted Materials:',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: _selectedCenter!.acceptedMaterials.map((material) {
+                return Chip(
+                  label: Text(material),
+                  backgroundColor: Colors.green.shade100,
+                  labelStyle: TextStyle(color: Colors.green.shade800),
+                  visualDensity: VisualDensity.compact,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                if (_selectedCenter!.website.isNotEmpty)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final Uri uri = Uri.parse(_selectedCenter!.website);
+                        launchUrl(uri);
+                      },
+                      icon: const Icon(Icons.link),
+                      label: const Text('Visit Website'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                      ),
+                    ),
+                  ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openInGoogleMaps(_selectedCenter!),
+                    icon: const Icon(Icons.directions),
+                    label: const Text('Directions'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-    ],
-  );
-}
+    );
+  }
+  
+  @override
+  void dispose() {
+    _mapController?.dispose();
+    super.dispose();
+  }
 }

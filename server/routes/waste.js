@@ -37,22 +37,32 @@ router.get("/api/waste/logs", auth, async (req, res) => {
 });
 
 // Get recycling centers (optionally filtered by location)
-router.get("/api/waste/recycling-centers", auth, async (req, res) => {
+// This should be added to one of your Express router files (e.g., routes.js)
+
+// Get recycling centers for users (with optional location-based sorting)
+router.get('/api/recycling-centers', async (req, res) => {
   try {
-    const { latitude, longitude, radius } = req.query;
+    const { lat, lng } = req.query;
     
-    let centers;
-    if (latitude && longitude) {
-      // Convert radius from km to meters
-      const radiusInMeters = (parseFloat(radius) || 10) * 1000;
-      centers = await RecyclingCenter.findNearby(
-        [parseFloat(longitude), parseFloat(latitude)],
-        radiusInMeters
-      );
-    } else {
-      centers = await RecyclingCenter.find({});
-    }
+    // If coordinates are provided, sort centers by distance
+    if (lat && lng) {
+      // Create a geo query for MongoDB
+      const centers = await RecyclingCenter.find({
+        location: {
+          $near: {
+            $geometry: {
+              type: "Point",
+              coordinates: [parseFloat(lng), parseFloat(lat)]  // MongoDB uses [longitude, latitude]
+            }
+          }
+        }
+      }).limit(50);  // Limit to nearest 50 centers
+      
+      return res.json(centers);
+    } 
     
+    // Otherwise, just return all centers
+    const centers = await RecyclingCenter.find({}).sort({ createdAt: -1 });
     res.json(centers);
   } catch (e) {
     res.status(500).json({ error: e.message });

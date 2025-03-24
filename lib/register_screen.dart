@@ -35,6 +35,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       return;
     }
 
+    if(password.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });

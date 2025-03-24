@@ -58,7 +58,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Future<void> _deleteRecyclingCenter(String id) async {
     try {
-      await adminService.deleteRecyclingCenter(context,id);
+      await adminService.deleteRecyclingCenter(context, id);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Recycling center deleted successfully'),
@@ -275,9 +275,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
         const SizedBox(width: 16),
         Expanded(
           child: _buildStatCard(
-            title: 'Active Centers',
-            value: recyclingCenters.where((center) => center['isActive'] == true).length.toString(),
-            icon: Icons.check_circle,
+            title: 'Latest Centers',
+            value: recyclingCenters.isNotEmpty ? '1' : '0',
+            icon: Icons.new_releases,
             color: Colors.green,
           ),
         ),
@@ -358,14 +358,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
               child: const Icon(Icons.location_on, color: Colors.green),
             ),
             title: Text(
-              center['name'] ?? 'Unknown Center',
+              center.name ?? 'Unknown Center',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 4),
-                Text(center['address'] ?? 'No address provided'),
+                Text(center.address ?? 'No address provided'),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -376,7 +376,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      center['phone'] ?? 'No phone provided',
+                      center.phone ?? 'No phone provided',
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
@@ -394,7 +394,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: () => _confirmDelete(center['_id'], center['name']),
+                  onPressed: () => _confirmDelete(center.id, center.name),
                 ),
               ],
             ),

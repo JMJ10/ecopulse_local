@@ -7,6 +7,7 @@ const RecyclingCenter = require('../models/recyclingcenter');
 const adminAuth = require('../middleware/adminauth');
 
 // Admin Sign In
+
 router.post('/api/admin/signin', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -52,7 +53,7 @@ router.post('/api/admin/signin', async (req, res) => {
 // Validate Admin Token
 router.post('/api/admin/tokenIsValid', async (req, res) => {
   try {
-    const token = req.header('x-auth-token');
+    const token = req.header('admin-token');
     if (!token) return res.json(false);
 
     const verified = jwt.verify(token, "adminSecretKey");
